@@ -1,5 +1,5 @@
 /**
- * Homie Node for VL53L1x.
+ * Automaton Class for VL53L1x.
  *
  */
 #include "SknLoxRanger.hpp"

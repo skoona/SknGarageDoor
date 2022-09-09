@@ -1,6 +1,6 @@
 /**
  * Automaton Class for VL53L1x.
- *
+ * - Atm_digital pulse;
  */
 
 #pragma once
