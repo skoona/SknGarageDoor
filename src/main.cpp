@@ -27,6 +27,15 @@ Rollershutter	PercentType	 0...100
                            DOWN if it equals 100,
                            UnDefType.UNDEF for any other value
 
+
+Configuration Settings section of data/Hhomie/config.json
+  "settings": {
+      "relayHoldTimeMS": 400,
+      "positionIntervalSec": 60,
+      "duration": 45,
+      "rangerClosedMM": 2000,
+      "rangerOpenMM": 200 }                           
+
 */
 
 #include <Homie.hpp>
