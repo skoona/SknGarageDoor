@@ -94,4 +94,6 @@ void SknGarageDoor::onReadyToOperate() {
  *
  */
 void SknGarageDoor::setup() {
+  pinMode(13, INPUT_PULLUP);
+  ranger.begin(13, 250);
 }

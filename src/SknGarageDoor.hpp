@@ -8,6 +8,7 @@
 #include <Automaton.h>
 #include <Homie.hpp>
 #include <Wire.h>
+#include "SknLoxRanger.hpp"
 
 
 class SknGarageDoor : public HomieNode {
@@ -33,4 +34,6 @@ private:
   const char *cSknGarageDoorPositionID = "Position";
 
   void printCaption();
+
+  SknLoxRanger ranger;
 };

@@ -4,27 +4,29 @@
  */
 #include "SknLoxRanger.hpp"
 
-SknLoxRanger::SknLoxRanger( const int gpioPin)
-    : _pinGPIO(gpioPin      
-{
-  printCaption();
+SknLoxRanger::SknLoxRanger( ) {}
 
-  pinMode(_pinGPIO, INPUT_PULLUP);
-
-  vbEnabled = false;
+/**
+ * VL53L1x Device Init
+ */
+SknLoxRanger& SknLoxRanger::begin(int gpioPin, unsigned int interMeasurementDurationMS ) {
   unsigned long int time_now = millis();
 
+  pinGPIO = gpioPin;
+  uiIinterMeasurementDuration=interMeasurementDurationMS;
+
   lox.setTimeout(500);
+ 
   if (!lox.init())
   {
     // delay(1000); // Delay is not working in this class ???
     time_now = millis();
     while (millis() < time_now + 1000){}
 
+    time_now = millis();
     while (!lox.init())
     {
-      Homie.getLogger() << cIndent << "Failed to detect and initialize sensor!" << endl;
-      // delay(1000 );
+      Serial.printf(" ✖  Failed to detect and initialize sensor!");
       time_now = millis();
       while (millis() < time_now + 1000){}
     }
@@ -32,129 +34,32 @@ SknLoxRanger::SknLoxRanger( const int gpioPin)
 
   if (lox.setDistanceMode(VL53L1X::Medium))
   {
-    Homie.getLogger() << "〽 Medium distance mode accepted." << endl;
+    Serial.printf("〽 Medium distance mode accepted.");
   }
 
   if (lox.setMeasurementTimingBudget(200000))
   {
-    Homie.getLogger() << "〽 200ms timing budget accepted." << endl;
-
-    ulLastTimebase = millis();
+    Serial.printf("〽 200ms timing budget accepted.");
   }
 
+  return(*this);
 }
 
 /**
  *
  */
-void SknLoxRanger::setOpenThresholdMM(const int mm) {
-  thresholdOpen = mm;
-}
-/**
- *
- */
-void SknLoxRanger::setClosedThresholdMM(const int mm) {
-  thresholdClosed = mm;
-}
-
-
-/**
- *
- */
-void SknLoxRanger::setDirectionStatus(const int value)
-{
-  switch(value) {
-    case IDLE:
-      if (distances[MAX_SAMPLES] >= thresholdClosed)
-      {
-        strcpy(cDirection, "CLOSED");
-      }
-      else if (distances[MAX_SAMPLES] <= thresholdOpen)
-      {
-        strcpy(cDirection, "OPEN");
-      }
-      else
-      {
-        strcpy(cDirection, "IDLE");
-      }
-      break;
-    case OPENING:
-      strcpy(cDirection, "OPENING");
-      break;
-    case CLOSING:
-      strcpy(cDirection, "CLOSING");
-      break;
-    default:
-      strcpy(cDirection, "IDLE");
-  }
+void SknLoxRanger::rangerStart(uint32_t duration) {
+  lox.startContinuous(duration);
 }
 
 /**
  *
+  if (!digitalRead(pinGPIO))
+  - active low
  */
-bool SknLoxRanger::isReady()
-{
-  return vbEnabled;
-}
-
-/**
- *
- */
-bool SknLoxRanger::isOpen()
-{
-  String value = String(cDirection);
-
-  if (!(value.equals("CLOSED")) && isReady())
-  {
-    return true;
-  }
-  return false;
-}
-
-/**
- *
- */
-bool SknLoxRanger::isClosed()
-{
-  String value = String(cDirection);
-
-  if (value.equals("CLOSED") && isReady())
-  {
-    return true;
-  }
-  return false;
-}
-
-/**
- *
- */
-void SknLoxRanger::stopRanging() {
-  lox.stopContinuous();  
-}
-
-
-/**
- *
- */
-void SknLoxRanger::startRanging(uint32_t duration) {
-      lox.startContinuous(duration);
-}
-
-/**
- *
- */
-void SknLoxRanger::printCaption() {
-  Homie.getLogger() << cCaption << "  " << getId() << endl;
-}
-
-/**
- * @brief Collect distance and determine direction of travel
- *
- */
-unsigned int SknLoxRanger::handleLoxRead()
+unsigned int SknLoxRanger::rangerReadValues()
 {
   const int capacity = (MAX_SAMPLES);
-  int idleUpDown = 0;
 
   unsigned int value = (unsigned int)lox.read(false);
   if (value == 0) {
@@ -172,106 +77,20 @@ unsigned int SknLoxRanger::handleLoxRead()
     distances[capacity] = uiDistanceValue;
   }
 
-  if (distances[0] > 0) {
-    idleUpDown = (distances[0] - distances[capacity]);
-
-    if (abs(idleUpDown) < 20 )
-    {
-      idleUpDown = IDLE;  // idle
-    }
-    else if (idleUpDown >= 60)
-    {
-      idleUpDown = OPENING; // opening
-    }
-    else
-    {
-      idleUpDown = CLOSING; // closing
-    }
-
-    setDirectionStatus(idleUpDown);
-  }
-
+  Serial.printf("〽 range: %ul mm,\tstatus: %s\traw: %ul\tsignal: %3.1f MCPS\tambient: %3.1f MCPS",
+                    lox.ranging_data.range_mm,
+                    lox.rangeStatusToString(lox.ranging_data.range_status),
+                    lox.ranging_data.range_status,
+                    lox.ranging_data.peak_signal_count_rate_MCPS,
+                    lox.ranging_data.ambient_count_rate_MCPS);
+  
+  
   return uiDistanceValue;
 }
 
 /**
  *
  */
-bool SknLoxRanger::collectRangeValues()
-{
-  if (!digitalRead(_pinGPIO))
-  {
-    handleLoxRead();
-    char buf[32];
-    snprintf(buf, sizeof(buf), cRangeFormat, lox.ranging_data.range_mm);
-    setProperty(cRangeID).send(buf);
-
-    snprintf(buf, sizeof(buf), cStatusFormat, lox.rangeStatusToString(lox.ranging_data.range_status));
-    setProperty(cStatusID).send(buf);
-
-    snprintf(buf, sizeof(buf), cSignalFormat, lox.ranging_data.peak_signal_count_rate_MCPS);
-    setProperty(cSignalID).send(buf);
-
-    snprintf(buf, sizeof(buf), cAmbientFormat, lox.ranging_data.ambient_count_rate_MCPS);
-    setProperty(cAmbientID).send(buf);
-
-    setProperty(cDirectionID).send(cDirection);
-
-    Homie.getLogger() << "〽 range: " << lox.ranging_data.range_mm
-                      << " mm \tstatus: " << lox.rangeStatusToString(lox.ranging_data.range_status)
-                      << " raw: " << lox.ranging_data.range_status
-                      << "\tsignal: " << lox.ranging_data.peak_signal_count_rate_MCPS
-                      << " MCPS\tambient: " << lox.ranging_data.ambient_count_rate_MCPS
-                      << " MCPS"
-                      << " Direction: " << cDirection << endl;
-  return true;                      
-  }
-
-  return false;
+void SknLoxRanger::rangerStop() {
+  lox.stopContinuous();  
 }
-
-/**
- *
- */
-// void SknLoxRanger::setup() {
-
-//   advertise(cRangeID)
-//           .setName("distance in mm")
-//           .setDatatype("integer")
-//           .setFormat(cRangeFormat)
-//           .setRetained(true)
-//           .setUnit("mm");
-
-//   advertise(cStatusID)
-//       .setName("range operating status")
-//       .setDatatype("string")
-//       .setFormat(cStatusFormat)
-//       .setRetained(true)
-//       .setUnit("#");
-
-//   advertise(cSignalID)
-//       .setName("peak signal count rate")
-//       .setDatatype("float")
-//       .setFormat(cSignalFormat)
-//       .setRetained(false)
-//       .setUnit("mcps");
-
-//   advertise(cAmbientID)
-//       .setName("ambient light count rate")
-//       .setDatatype("float")
-//       .setFormat(cAmbientFormat)
-//       .setRetained(false)
-//       .setUnit("mcps");
-
-//   advertise(cDirectionID)
-//       .setName("Direction of movement")
-//       .setDatatype("enum")
-//       .setFormat(cDirectionFormat)
-//       .setRetained(false);
-
-//   advertise(cOperateID)
-//       .setName("Actively Ranging")
-//       .setDatatype("enum")
-//       .setFormat(cOperateFormat)
-//       .setRetained(false);
-// }
