@@ -94,6 +94,14 @@ void SknGarageDoor::onReadyToOperate() {
  *
  */
 void SknGarageDoor::setup() {
-  pinMode(13, INPUT_PULLUP);
-  ranger.begin(13, 250);
+  unsigned long int time_now = millis();
+
+  if(vbOne) {
+    pinMode(13, INPUT_PULLUP);
+
+    ranger.begin(13, 250).rangerStart();
+    while (millis() < time_now + 1000){}
+    vbOne=false;
+  }
+  ranger.rangerReadValues(true); // 250ms read + 250ms wait = cycle time
 }

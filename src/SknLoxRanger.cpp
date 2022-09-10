@@ -15,8 +15,6 @@ SknLoxRanger& SknLoxRanger::begin(int gpioPin, unsigned int interMeasurementDura
   pinGPIO = gpioPin;
   uiIinterMeasurementDuration=interMeasurementDurationMS;
 
-  lox.setTimeout(500);
- 
   if (!lox.init())
   {
     // delay(1000); // Delay is not working in this class ???
@@ -26,30 +24,34 @@ SknLoxRanger& SknLoxRanger::begin(int gpioPin, unsigned int interMeasurementDura
     time_now = millis();
     while (!lox.init())
     {
-      Serial.printf(" ✖  Failed to detect and initialize sensor!");
+      Serial.printf(" ✖  Failed to detect and initialize sensor!\n");
       time_now = millis();
       while (millis() < time_now + 1000){}
     }
   }
 
+  lox.setTimeout(500);
+ 
   if (lox.setDistanceMode(VL53L1X::Medium))
   {
-    Serial.printf("〽 Medium distance mode accepted.");
+    Serial.printf("〽 Medium distance mode accepted.\n");
   }
 
-  if (lox.setMeasurementTimingBudget(200000))
+  if (lox.setMeasurementTimingBudget(250000))
   {
-    Serial.printf("〽 200ms timing budget accepted.");
+    Serial.printf("〽 250ms timing budget accepted.\n");
   }
-
+  
+  Serial.printf(" ✖  SknLoxRanger initialization Complete.\n");
   return(*this);
 }
 
 /**
- *
+ *  // 250ms read + 250ms wait = cycle time
  */
-void SknLoxRanger::rangerStart(uint32_t duration) {
-  lox.startContinuous(duration);
+SknLoxRanger&  SknLoxRanger::rangerStart() {
+  lox.startContinuous(uiIinterMeasurementDuration);
+  return *this;
 }
 
 /**
@@ -57,11 +59,11 @@ void SknLoxRanger::rangerStart(uint32_t duration) {
   if (!digitalRead(pinGPIO))
   - active low
  */
-unsigned int SknLoxRanger::rangerReadValues()
+unsigned int SknLoxRanger::rangerReadValues(bool wait=false)
 {
   const int capacity = (MAX_SAMPLES);
 
-  unsigned int value = (unsigned int)lox.read(false);
+  unsigned int value = (unsigned int)lox.readRangeContinuousMillimeters(wait); // readRangeContinuousMillimeters(true)
   if (value == 0) {
     return uiDistanceValue;
   }
@@ -77,7 +79,7 @@ unsigned int SknLoxRanger::rangerReadValues()
     distances[capacity] = uiDistanceValue;
   }
 
-  Serial.printf("〽 range: %ul mm,\tstatus: %s\traw: %ul\tsignal: %3.1f MCPS\tambient: %3.1f MCPS",
+  Serial.printf("〽 range: %u mm,\tstatus: %s\traw: %u\tsignal: %3.1f MCPS\tambient: %3.1f MCPS\n",
                     lox.ranging_data.range_mm,
                     lox.rangeStatusToString(lox.ranging_data.range_status),
                     lox.ranging_data.range_status,

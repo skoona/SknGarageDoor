@@ -26,6 +26,8 @@ protected:
 
 private:
 
+  volatile bool vbOne=true;
+
   Atm_digital irq;   // placeholder Automaton object
 
   const char *cCaption = "• Garage Door Automation Module:";

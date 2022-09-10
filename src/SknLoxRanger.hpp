@@ -19,14 +19,14 @@ public:
   SknLoxRanger();
 
   SknLoxRanger& begin(int gpioPin, unsigned int interMeasurementDurationMS );
-  void rangerStart(uint32_t duration);
-  unsigned int rangerReadValues();
+  SknLoxRanger&  rangerStart();
+  unsigned int rangerReadValues(bool wait);
   void rangerStop();
 
 protected:
   int pinGPIO;
   unsigned int uiDistanceValue = 0;
-  uint32_t uiIinterMeasurementDuration;
+  unsigned int uiIinterMeasurementDuration;
   
 private :   
   #define MAX_SAMPLES 5

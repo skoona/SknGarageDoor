@@ -47,8 +47,8 @@ extern "C"
 #include <user_interface.h>
 }
 
-#define SDA 14
-#define SCL 12
+#define SDA 5
+#define SCL 4
 #define DEFAULT_HOLD_MS 400
 #define LOX_RUNTIME_SECONDS 30
 
@@ -67,14 +67,8 @@ extern "C"
 #define RELAY_PIN    5
 
 // #ifndef LED_BUILTIN
-#define LED_BUILTIN 2
+#define LED_BUILTIN 4
 // #endif
-
-HomieSetting<long> cfgRelayHoldMS("relayHoldTimeMS", "Relay hold time in milliseconds.");
-HomieSetting<long> cfgIntervalSec("positionIntervalSec", "Seconds between ranging to verify door position.");
-HomieSetting<long> cfgDuration("duration", "Seconds to measure distance after triggered.");
-HomieSetting<long> cfgOpenMM("rangerOpenMM", "fully open threshold in millimeters.");
-HomieSetting<long> cfgClosedMM("rangerClosedMM", "fully closed threshold in millimeters.");
 
 SknGarageDoor doorNode(SKN_ID, SKN_TITLE, SKN_TYPE);
 
@@ -97,34 +91,6 @@ void setup()
 
   Homie_setFirmware(SKN_MOD_NAME, SKN_MOD_VERSION);
   Homie_setBrand(SKN_MOD_BRAND);
-
-  cfgRelayHoldMS
-      .setDefaultValue(DEFAULT_HOLD_MS)
-      .setValidator([](long candidate)
-                    { return candidate > 200 && candidate < 1000; });
-  cfgIntervalSec
-      .setDefaultValue(300)
-      .setValidator([](long candidate)
-                    { return candidate > 59 && candidate < 3601; });
-  cfgDuration
-      .setDefaultValue(20)
-      .setValidator([](long candidate)
-                    { return candidate > 0 && candidate < 181; });
-
-  cfgOpenMM
-      .setDefaultValue(200)
-      .setValidator([](long candidate)
-                    { return candidate > 10 && candidate < 400; });
-  cfgClosedMM
-      .setDefaultValue(2000)
-      .setValidator([](long candidate)
-                    { return candidate > 1000 && candidate < 3200; });
-
-  // relay.setHoldTimeInMilliseconds(cfgRelayHoldMS.get());
-  // ranger.setRunDuration(cfgDuration.get());
-  // ranger.setOpenThresholdMM(cfgOpenMM.get());
-  // ranger.setClosedThresholdMM(cfgClosedMM.get());
-  // doorNode.setIntervalInSeconds(cfgIntervalSec.get());
 
   Homie.setBroadcastHandler(broadcastHandler)
       .setLedPin(LED_BUILTIN, LOW)
