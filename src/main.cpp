@@ -66,11 +66,17 @@ extern "C"
 #define LOX_PIN_GPIO  13
 #define RELAY_PIN    5
 
-// #ifndef LED_BUILTIN
-#define LED_BUILTIN 4
-// #endif
+#ifndef LED_BUILTIN
+  #define LED_BUILTIN 4
+#endif
 
-SknGarageDoor doorNode(SKN_ID, SKN_TITLE, SKN_TYPE);
+
+SknLoxRanger ranger;
+SknGarageDoor doorNode(SKN_ID, SKN_TITLE, SKN_TYPE, ranger);
+
+void readDoorPositionCallback(int idx, int v, int up ) {
+  doorNode.setDoorPosition( ranger.readValues(false) );
+}  
 
 bool broadcastHandler(const String &level, const String &value)
 {

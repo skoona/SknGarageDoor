@@ -19,9 +19,9 @@ public:
   SknLoxRanger();
 
   SknLoxRanger& begin(int gpioPin, unsigned int interMeasurementDurationMS );
-  SknLoxRanger&  rangerStart();
-  unsigned int rangerReadValues(bool wait);
-  void rangerStop();
+  SknLoxRanger&  start();
+  unsigned int readValues(bool wait);
+  void stop();
 
 protected:
   int pinGPIO;
