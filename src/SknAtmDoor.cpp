@@ -10,6 +10,9 @@ SknAtmDoor::SknAtmDoor(uint8_t relayPin, SknLoxRanger& lox)
     ranger(lox)
  { 
 
+    pinMode(uiRelayPin, OUTPUT); // Door operator
+    digitalWrite(uiRelayPin, LOW); // Init door to off
+
     uiEstimatedPosition = 100;
     uiRequestedPosition = 100;
     on = false;
@@ -21,15 +24,13 @@ SknAtmDoor& SknAtmDoor::begin()
     const static state_t state_table[] PROGMEM = {
         /*                             ON_ENTER       ON_LOOP    ON_EXIT     EVT_STEP    EVT_CMD_DOWN  EVT_CMD_STOP    EVT_CMD_UP  EVT_POS_REACHED  ELSE */
         /*     STOPPED */           ENT_STOPPED,           -1,        -1,          -1,    MOVING_DOWN,           -1,    MOVING_UP,              -1,   -1,
-        /*   MOVING_UP */         ENT_MOVING_UP,       LP_POS,        -1,          -1,    MOVING_DOWN,      STOPPED,           -1,              UP,   -1,
+        /*   MOVING_UP */         ENT_MOVING_UP,       LP_POS,        -1,          UP,    MOVING_DOWN,      STOPPED,           -1,              UP,   -1,
         /*          UP */                ENT_UP,           -1,        -1,          -1,    MOVING_DOWN,           -1,           -1,              -1,   -1,
-        /* MOVING_DOWN */       ENT_MOVING_DOWN,       LP_POS,        -1,          -1,             -1,      STOPPED,    MOVING_UP,            DOWN,   -1,
+        /* MOVING_DOWN */       ENT_MOVING_DOWN,       LP_POS,        -1,        DOWN,             -1,      STOPPED,    MOVING_UP,            DOWN,   -1,
         /*        DOWN */              ENT_DOWN,           -1,        -1,          -1,             -1,           -1,    MOVING_UP,              -1,   -1,
     };
     // clang-format on
     Machine::begin(state_table, ELSE);
-    pinMode(uiRelayPin, OUTPUT); // Door operator
-    digitalWrite(uiRelayPin, LOW); // Init door to off
 
     return *this;
 }
@@ -69,6 +70,9 @@ void SknAtmDoor::moveStp() {
     relayStop();
     ranger.stop(); 
 }
+void SknAtmDoor::moveHalt() { 
+    ranger.stop(); 
+}
 void SknAtmDoor::moveChgDir() { 
     relayChangeDirection();
 }
@@ -77,27 +81,24 @@ void SknAtmDoor::moveChgDir() {
  * The code must return 1 to trigger the event
  * EVT_STEP, EVT_CMD_DOWN, EVT_CMD_STOP, EVT_CMD_UP, EVT_POS_REACHED, ELSE
  */
-int SknAtmDoor::event(int id)
-{
+int SknAtmDoor::event(int id) {
     switch (id)
     {
     case EVT_POS_REACHED:
-        if (counter_stepsToGo.expired() && !(uiEstimatedPosition == 0 || uiEstimatedPosition == 100))
+        if (counter_stepsToGo.expired())
         {
-            Serial.printf("Pos %d reached.\n", uiEstimatedPosition);
+            Serial.printf("Pos %d reached, request was %d.\n", uiEstimatedPosition, uiRequestedPosition);
             return true;
         }
-        else
-        {
-            return false;
-        }
-    case EVT_CMD_UP:
+        break;
+    case EVT_CMD_UP:   // up=0        pos=50
+        return (uiRequestedPosition < uiEstimatedPosition );
+    case EVT_CMD_DOWN: // dn=100      pos=50
+        return (uiRequestedPosition > uiEstimatedPosition );
     case EVT_CMD_STOP:
-    case EVT_CMD_DOWN:
-    case EVT_STEP:
-        return false;
+        return (!counter_stepsToGo.expired() && uiEstimatedPosition == uiRequestedPosition);
     }
-    return 0;
+    return false;
 }
 
 /* Add C++ code for each action
@@ -106,15 +107,16 @@ int SknAtmDoor::event(int id)
  * Available connectors:
  *   push( connectors, ON_CHANGE | ATM_BROADCAST, 1, <v>, <up> );
  *   push( connectors, ON_POS, 0, <v>, <up> );
+ *   ENT_STOPPED, ENT_MOVING_UP, ENT_UP, ENT_MOVING_DOWN, ENT_DOWN, LP_POS  // ACTIONS
  */
 void SknAtmDoor::action(int id)
 {
     switch (id)
     {
     case ENT_DOWN:
-        moveStp();
+        moveHalt();
         push(connectors, ON_CHANGE, 0, state(), 0);
-        return;
+        break;
     case ENT_MOVING_DOWN:
         moveDn();
         push(connectors, ON_CHANGE, 0, state(), 0);
@@ -123,15 +125,19 @@ void SknAtmDoor::action(int id)
         uiEstimatedPosition++;
         if (uiEstimatedPosition % 2 == 0)
             push(connectors, ON_POS, 0, uiEstimatedPosition, 0);
-        return;
+        break;
     case ENT_STOPPED:
         moveStp();
+        uiEstimatedPosition = uiRequestedPosition;
         push(connectors, ON_POS, 0, uiEstimatedPosition, 0);
         push(connectors, ON_CHANGE, 0, state(), 0);
-        return;
+        break;
     case LP_POS:
-        Serial.printf("^%u\n", uiEstimatedPosition);
-        return;
+        if(uiRequestedPosition==uiRequestedPosition) {
+            trigger(EVT_STEP);
+        }
+        Serial.printf("^ ep=%d, rp=%d\n", uiEstimatedPosition, uiRequestedPosition);
+        break;
     case ENT_MOVING_UP:
         moveUp();
         push(connectors, ON_CHANGE, 0, state(), 0);
@@ -140,11 +146,11 @@ void SknAtmDoor::action(int id)
         uiEstimatedPosition--;
         if (uiEstimatedPosition % 2 == 0)
             push(connectors, ON_POS, 0, uiEstimatedPosition, 0);
-        return;
+        break;
     case ENT_UP:
+        moveHalt();
         push(connectors, ON_CHANGE, 0, state(), 0);
-        moveStp();
-        return;
+        break;
     }
 }
 
@@ -183,14 +189,14 @@ SknAtmDoor& SknAtmDoor::cmd_pos(uint8_t destPos)
     int8_t delta = destPos - uiEstimatedPosition;
     if (delta > 0 || destPos == 100)
     {
-        cmd_down();
-        Serial.printf("%d steps to go down\n", delta);
+        cmd_up();
+        Serial.printf("%d steps to go up\n", delta);
         counter_stepsToGo.set(delta);
     }
     if (delta < 0 || destPos == 0)
     {
-        cmd_up();
-        Serial.printf("%d steps to go up\n", -delta);
+        cmd_down();
+        Serial.printf("%d steps to go down\n", -delta);
         counter_stepsToGo.set(-delta);
     }
     return *this;
@@ -200,21 +206,33 @@ SknAtmDoor& SknAtmDoor::cmd_pos(uint8_t destPos)
  *
  */
 SknAtmDoor& SknAtmDoor::cmd_down() {
-	counter_stepsToGo.set(ATM_COUNTER_OFF);
+    uiRequestedPosition = 100;
+    int8_t delta = uiRequestedPosition - uiEstimatedPosition;
+	counter_stepsToGo.set(delta);
 	trigger(EVT_CMD_DOWN);
 	return *this;
 }
 
 SknAtmDoor& SknAtmDoor::cmd_stop() {
-	counter_stepsToGo.set(ATM_COUNTER_OFF);
+    uiEstimatedPosition = uiRequestedPosition;
+    int8_t delta = uiRequestedPosition - uiEstimatedPosition;
+	counter_stepsToGo.set(delta);
 	trigger(EVT_CMD_STOP);
 	return *this;
 }
 
 SknAtmDoor& SknAtmDoor::cmd_up() {
-	counter_stepsToGo.set(ATM_COUNTER_OFF);
+    uiRequestedPosition = 0;
+    int8_t delta = uiRequestedPosition - uiEstimatedPosition;
+	counter_stepsToGo.set(delta);
 	trigger(EVT_CMD_UP);
 	return *this;
+}
+
+SknAtmDoor& SknAtmDoor::setDoorPosition(uint8_t currentPosition) {
+    uiEstimatedPosition = currentPosition;
+
+    return *this;
 }
 
 /*

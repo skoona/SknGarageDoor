@@ -71,21 +71,51 @@ extern "C"
   #define LED_BUILTIN 4
 #endif
 
+/* Automaton Nodes 
+*/
+Atm_digital irq;                    // handles data ready interrupt for ranger
+SknLoxRanger ranger;                // measures distance of door
+SknAtmDoor door(RELAY_PIN, ranger); // controls door relay and startng stopping of ranger
 
-SknLoxRanger ranger;
-SknGarageDoor doorNode(SKN_ID, SKN_TITLE, SKN_TYPE, ranger);
-SknAtmDoor ctrl(RELAY_PIN, ranger);
+/* Homie Nodes 
+*/
+SknGarageDoor doorNode(SKN_ID, SKN_TITLE, SKN_TYPE, LOX_PIN_GPIO, irq, ranger, door); // communication interface
 
+/*
+ * Callback for Ranger positioning
+*/
 void readDoorPositionCallback(int idx, int v, int up ) {
-  doorNode.setDoorPosition( ranger.readValues(false) );
+  long posValue = (long)ranger.readValues(false);
+  long translatedValue = map(posValue, 10, 1960, 0, 100);
+  posValue = constrain(translatedValue, 0, 100);
+
+  door.setDoorPosition( posValue );
+  doorNode.setDoorPosition( posValue );
+
+  Serial.printf("Door position = %d\n", posValue);
+}  
+/*
+ * Callback for Door State
+*/
+void readDoorStateCallback(int idx, int v, int up ) {
+  const char *_state = door.mapstate(v);
+  doorNode.setDoorState( (char *)_state );
+
+  Serial.printf("Door State = %s\n", _state);
 }  
 
+/*
+ * Callback for Homie Broadcasts
+*/
 bool broadcastHandler(const String &level, const String &value)
 {
   Homie.getLogger() << "Received broadcast level " << level << ": " << value << endl;
   return true;
 }
 
+/*
+ * Arduino Setup: Initialze Homie
+*/
 void setup()
 {
   delay(200);
@@ -107,6 +137,9 @@ void setup()
   Homie.setup();
 }
 
+/*
+ * Arduino Loop: Cycles Homie Nodes
+*/
 void loop()
 {
   Homie.loop();

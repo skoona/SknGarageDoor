@@ -4,9 +4,12 @@
  */
 #include "SknGarageDoor.hpp"
 
-SknGarageDoor::SknGarageDoor(const char *id, const char *name, const char *cType, SknLoxRanger& rangerObj) 
+SknGarageDoor::SknGarageDoor(const char *id, const char *name, const char *cType, int rangerReadyPin, Atm_digital& irqObj, SknLoxRanger& rangerObj, SknAtmDoor& doorObj) 
     : HomieNode(id, name, cType),
-    ranger(rangerObj)
+    dataReadyPin(rangerReadyPin),
+    irq(irqObj),
+    ranger(rangerObj),
+    door(doorObj)
 {
   advertise(cSknDoorID)
     .setName("State")
@@ -36,52 +39,45 @@ void SknGarageDoor::printCaption() {
  *
  */
 bool SknGarageDoor::handleInput(const HomieRange& range, const String& property, const String& value) {
-
+  bool rc = false;
   Homie.getLogger() << cIndent << "〽 handleInput -> property '" << property << "' value=" << value << endl;
 
   if (property.equalsIgnoreCase(cSknPosID))
   {
     if (isDigit(value.charAt(0))) {
       uint8_t perValue = value.toInt();
+      Homie.getLogger() << cIndent << "Door is MOVING to Position: " << perValue << endl;
 			if (perValue > 100) return false;
-      ranger.start();
+      door.cmd_pos(perValue);
+      setProperty(cSknDoorID).send(cSknDoorState);
       setProperty(cSknPosID).send(String(perValue));
-      // DO SOMETHING
+     rc = true;
+
     } else if (value.equalsIgnoreCase("up")) {
-      ranger.start();
-      Homie.getLogger() << cIndent << "Door is UP" << endl;
-      setProperty(cSknDoorID).send("UP");
-      setProperty(cSknPosID).send("0");
+      Homie.getLogger() << cIndent << "Door is MOVING_UP" << endl;
+      door.cmd_up();
+      setProperty(cSknDoorID).send(cSknDoorState);
+      setProperty(cSknPosID).send(String(iDoorPosition));
+     rc = true;
 
     } else if (value.equalsIgnoreCase("down")) {
-      ranger.start();
-      Homie.getLogger() << cIndent << "Door is DOWN" << endl;
-      setProperty(cSknDoorID).send("DOWN");
-      setProperty(cSknPosID).send("100");
+      Homie.getLogger() << cIndent << "Door is MOVING_DOWN" << endl;
+      door.cmd_down();
+      setProperty(cSknDoorID).send(cSknDoorState);
+      setProperty(cSknPosID).send(String(iDoorPosition));
+     rc = true;
 
     } else if (value.equalsIgnoreCase("stop")) {
-      ranger.stop();
+      door.cmd_stop();
       Homie.getLogger() << cIndent << "Door is STOPPED" << endl;
-      setProperty(cSknDoorID).send("STOPPED");
-      setProperty(cSknPosID).send("40");
+      setProperty(cSknDoorID).send(cSknDoorState);
+      setProperty(cSknPosID).send(String(iDoorPosition));
+     rc = true;
 
-    } else {
-      Homie.getLogger() << cIndent << "Door is IDLE at position " << uiDistanceValue << endl;
-      setProperty(cSknDoorID).send("IDLE");
-      setProperty(cSknPosID).send("100");
-    }
-
-    return true;
+    } 
   }
 
-  return false;
-}
-
-/**
- *
- */
-void SknGarageDoor::loop() {
-  automaton.run();
+  return rc;
 }
 
 /**
@@ -98,9 +94,16 @@ void SknGarageDoor::onReadyToOperate() {
 /**
  *
  */
+void SknGarageDoor::setDoorState(char *_state) {
+  cSknDoorState = _state;
+  setProperty(cSknDoorID).send(cSknDoorState);
+}
+/**
+ *
+ */
 void SknGarageDoor::setDoorPosition(unsigned int _position) {
-  uiDistanceValue = _position;
-  setProperty(cSknPosID).send(String(uiDistanceValue));
+  iDoorPosition = (int)_position;
+  setProperty(cSknPosID).send(String(iDoorPosition));
 }
 
 /**
@@ -109,13 +112,24 @@ void SknGarageDoor::setDoorPosition(unsigned int _position) {
 void SknGarageDoor::setup() {
   
   if(vbOne) {
-    ranger.begin(13, 1000);
-      // .rangerStart();
+    ranger.begin(dataReadyPin, 1000);       // vl53l1x line of sight distance measurement
 
-    irq.begin(13, 30, true, true)
+    irq.begin(dataReadyPin, 30, true, true) // ranger interrupt pin when data ready
       .trace( Serial )
       .onChange(HIGH, readDoorPositionCallback );
 
+    door.begin()                  // door relay and operational logic
+      .trace( Serial )
+      .onChange([this]( int idx, int v, int up ) { setDoorState((char *)door.mapstate(v));},0)
+	    .onPos([this]( int idx, int v, int up ) { setDoorPosition(v); },0);
+
     vbOne=false;
   }
+}
+
+/**
+ *
+ */
+void SknGarageDoor::loop() {
+  automaton.run();
 }

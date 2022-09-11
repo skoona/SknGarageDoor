@@ -30,6 +30,7 @@ public:
     SknAtmDoor& cmd_stop(void);
     SknAtmDoor& cmd_up(void);
     SknAtmDoor& cmd_pos(uint8_t destPos);
+    SknAtmDoor& setDoorPosition(uint8_t currentPosition);
 
     const char * mapstate(int state);
 
@@ -48,6 +49,7 @@ private:
     void moveUp();
     void moveDn();
     void moveStp();
+    void moveHalt();
     void moveChgDir();
 
     int event(int id);
