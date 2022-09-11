@@ -41,6 +41,7 @@ Configuration Settings section of data/Hhomie/config.json
 #include <Homie.hpp>
 #include <Wire.h>
 #include "SknGarageDoor.hpp"
+#include "SknAtmDoor.hpp"
 
 extern "C"
 {
@@ -64,7 +65,7 @@ extern "C"
 #define LOX_PIN_SDA   SDA
 #define LOX_PIN_SCL   SCL
 #define LOX_PIN_GPIO  13
-#define RELAY_PIN    5
+#define RELAY_PIN    16
 
 #ifndef LED_BUILTIN
   #define LED_BUILTIN 4
@@ -73,6 +74,7 @@ extern "C"
 
 SknLoxRanger ranger;
 SknGarageDoor doorNode(SKN_ID, SKN_TITLE, SKN_TYPE, ranger);
+SknAtmDoor ctrl(RELAY_PIN, ranger);
 
 void readDoorPositionCallback(int idx, int v, int up ) {
   doorNode.setDoorPosition( ranger.readValues(false) );
