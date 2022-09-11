@@ -4,12 +4,16 @@
  */
 #include "SknAtmDoor.hpp"
 
-SknAtmDoor::SknAtmDoor(uint8_t relayPin, SknLoxRanger &lox) : Machine(),
-                                        uiEstimatedPosition(100),
-                                        uiRequestedPosition(100),
-                                        ranger(lox),
-                                        uiRelayPin(relayPin),
-                                        on(false){};
+SknAtmDoor::SknAtmDoor(uint8_t relayPin, SknLoxRanger& lox) 
+    : Machine(),
+    uiRelayPin(relayPin),
+    ranger(lox)
+ { 
+
+    uiEstimatedPosition = 100;
+    uiRequestedPosition = 100;
+    on = false;
+};
 
 SknAtmDoor& SknAtmDoor::begin()
 {
@@ -35,7 +39,7 @@ SknAtmDoor& SknAtmDoor::begin()
 */
 SknAtmDoor& SknAtmDoor::relayStart() {
     digitalWrite(uiRelayPin, HIGH);
-    delay(384); 
+    delay(512); 
     digitalWrite(uiRelayPin, LOW); 
     return *this;    
 }
