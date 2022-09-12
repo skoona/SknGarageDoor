@@ -101,7 +101,7 @@ void SknGarageDoor::setDoorPosition(unsigned int _position) {
  * 
  */
 void SknGarageDoor::enableAutomatons() {
-  if(vbOne) {
+  if(!vbOne) {
     ranger.begin( 1000);       // vl53l1x line of sight distance measurement
 
     irq.begin(dataReadyPin, 30, true, true) // ranger interrupt pin when data ready
@@ -122,7 +122,7 @@ void SknGarageDoor::enableAutomatons() {
     irq.cycle(5000);
     ranger.stop();
 
-    vbOne=false;
+    vbOne=true;
   }
 }
 /**
@@ -156,7 +156,7 @@ void SknGarageDoor::setup() {
  *
  */
 void SknGarageDoor::loop() {
-  if(!vbOne) {
+  if(vbOne) {
     automaton.run();
   }
 }

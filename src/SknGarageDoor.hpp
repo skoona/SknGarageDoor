@@ -28,7 +28,7 @@ protected:
 
 private:
 
-  volatile bool vbOne=true;
+  volatile bool vbOne=false;
 
   const char *cCaption = "• Garage Door Automaton Module:";
   const char *cIndent = " ✖  ";
