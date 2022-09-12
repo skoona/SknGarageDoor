@@ -54,7 +54,7 @@ SknAtmDoor& SknAtmDoor::relayStop() {
     return *this;    
 }
 SknAtmDoor& SknAtmDoor::relayChangeDirection() {
-    relayStop().relayPause(10).relayStart();
+    // relayStop().relayPause(10).relayStart();        HOLD FOR LATER EVALUATION
     Serial.printf("^ SknAtmDoor::relayChangeDirection() ep=%d, rp=%d, eReq:%s, state:%s\n", uiEstimatedPosition, uiRequestedPosition, mapstate(eRequestedDirection), mapstate(state()));
     return *this;    
 }
@@ -88,28 +88,20 @@ void SknAtmDoor::moveChgDir() {
  * EVT_STEP, EVT_CMD_DOWN, EVT_CMD_STOP, EVT_CMD_UP, EVT_POS_REACHED, ELSE
  */
 int SknAtmDoor::event(int id) {
-    // Serial.printf("[event] id %d, nextTrigger %d, current %s, next %s, eReq:%s\n", 
-    //     id, next_trigger, 
-    //     mapstate(current),  mapstate(next), mapstate(eRequestedDirection));
     switch (id)
     {        
     case EVT_STEP:
         return (id == next_trigger);
-            // Serial.printf("[EVT_STEP]Pos %d reached, request was %d, eReq:%s, state:%s\n", uiEstimatedPosition, uiRequestedPosition, mapstate(eRequestedDirection), mapstate(state()));
-        // return ( uiRequestedPosition != uiEstimatedPosition );
+
     case EVT_DOWN: // dn=100      pos=50
-        return (( uiRequestedPosition <= uiEstimatedPosition ) || (id == next_trigger));
-            // Serial.printf("[EVT_DOWN]Pos %d reached, request was %d, eReq:%s, state:%s\n", uiEstimatedPosition, uiRequestedPosition, mapstate(eRequestedDirection), mapstate(state()));
-        // return ( eRequestedDirection != state());
+        return (id == next_trigger);
+
     case EVT_STOP:
         return (id == next_trigger);
-            // Serial.printf("[EVT_STOP]Pos %d reached, request was %d, eReq:%s, state:%s\n", uiEstimatedPosition, uiRequestedPosition, mapstate(eRequestedDirection), mapstate(state()));
-        // return ( uiEstimatedPosition != uiRequestedPosition);
+
     case EVT_UP:   // up=0        pos=50
-        return (( uiRequestedPosition <= uiEstimatedPosition ) || (id == next_trigger));
-            // Serial.printf("[EVT_UP]Pos %d reached, request was %d, eReq:%s, state:%s\n", uiEstimatedPosition, uiRequestedPosition, mapstate(eRequestedDirection), mapstate(state()));
-        // return ( eRequestedDirection != state() );
-        break;
+        return (id == next_trigger);
+
     case EVT_POS_REACHED:
         if( uiRequestedPosition == uiEstimatedPosition ) {
             // Serial.printf("[EVT_POS_REACHED]Pos %d reached, request was %d, eReq:%s, state:%s\n", uiEstimatedPosition, uiRequestedPosition, mapstate(eRequestedDirection), mapstate(state()));
@@ -129,16 +121,13 @@ int SknAtmDoor::event(int id) {
  */
 void SknAtmDoor::action(int id)
 {
-    // Serial.printf("[action]Action id %d, nextTrigger %d, current %s, next %s, eReq:%s\n", 
-    //     id, next_trigger, 
-    //     mapstate(current),  mapstate(next), mapstate(eRequestedDirection));
     switch (id)
     {
-    // case ATM_ON_SWITCH:
-    // Serial.printf("[action]ATM_ON_SWITCH id %d, nextTrigger %d, current %s, next %s, eReq:%s\n", 
-    //     id, next_trigger, 
-    //     mapstate(current),  mapstate(next), mapstate(eRequestedDirection));
-    //     break;
+    case ATM_ON_SWITCH:
+    Serial.printf("[action]ATM_ON_SWITCH id %d, nextTrigger %d, current %s, next %s, eReq:%s\n", 
+        id, next_trigger, 
+        mapstate(current),  mapstate(next), mapstate(eRequestedDirection));
+        break;
     case ENT_STOPPED:
         moveHalt();
         // uiEstimatedPosition = uiRequestedPosition;
@@ -250,13 +239,17 @@ SknAtmDoor& SknAtmDoor::setDoorPosition(uint8_t currentPosition) {
     // are we moving up
     if((iSampleCount >= MAX_SAMPLES) && (iaDirection[0] > iaDirection[iSamples])) { // moving up 20 > 5 = UP[0]
         bDirection = true;
+        if (eRequestedDirection != current) {
+            moveChgDir();
+            iSampleCount = 0;
+        }
+
+    } else { // moving down
+        if (eRequestedDirection != current) {
+            moveChgDir();
+            iSampleCount = 0;
+        }
     }
-    // should we change directions
-    // be clear and not fire on handle stationary position
-    // if ((iSampleCount >= iSamples) && (eRequestedDirection != current)) {
-    //     moveChgDir();
-    //     iSampleCount = 0;
-    // }
 
     Serial.printf("SknAtmDoor::setDoorPosition(%d) Position:%d, Moving:%s, sReq:%s, sCur:%s, vLow:%d, vHigh:%d\n", 
         iSampleCount, currentPosition, (bDirection ? "UP" : "DOWN"), 
