@@ -240,13 +240,13 @@ SknAtmDoor& SknAtmDoor::setDoorPosition(uint8_t currentPosition) {
     if((iSampleCount >= MAX_SAMPLES) && (iaDirection[0] > iaDirection[iSamples])) { // moving up 20 > 5 = UP[0]
         bDirection = true;
         if (eRequestedDirection != current) {
-            moveChgDir();
+            // moveChgDir();
             iSampleCount = 0;
         }
 
     } else { // moving down
         if (eRequestedDirection != current) {
-            moveChgDir();
+            // moveChgDir();
             iSampleCount = 0;
         }
     }
