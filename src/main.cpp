@@ -92,7 +92,7 @@ void readDoorPositionCallback(int idx, int v, int up ) {
   door.setDoorPosition( posValue );
   doorNode.setDoorPosition( posValue );
 
-  Serial.printf("Door position = %d\n", posValue);
+  Serial.printf("Door position = %ld, idx=%d, v=%d, up=%d\n", posValue, idx,v,up);
 }  
 /*
  * Callback for Door State

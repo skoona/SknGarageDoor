@@ -48,6 +48,9 @@ SknLoxRanger& SknLoxRanger::begin(int gpioPin, unsigned int interMeasurementDura
   }
   
   Serial.printf(" ✖  SknLoxRanger initialization Complete.\n");
+  
+  stop();
+
   return(*this);
 }
 

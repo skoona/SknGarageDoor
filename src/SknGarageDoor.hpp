@@ -36,10 +36,11 @@ private:
   const char *cSknDoorID = "State";
   const char *cSknPosID = "Position";
   
-  char *cSknDoorState = "Down";
+  const char *cSknDoorState = "Down";
   int iDoorPosition = 100;
   int dataReadyPin = 13;
 
+  void enableAutomatons();
   void printCaption();
 
   SknLoxRanger& ranger;  // door position vl53l1x measurement

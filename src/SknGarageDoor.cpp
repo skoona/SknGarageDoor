@@ -7,24 +7,11 @@
 SknGarageDoor::SknGarageDoor(const char *id, const char *name, const char *cType, int rangerReadyPin, Atm_digital& irqObj, SknLoxRanger& rangerObj, SknAtmDoor& doorObj) 
     : HomieNode(id, name, cType),
     dataReadyPin(rangerReadyPin),
-    irq(irqObj),
     ranger(rangerObj),
-    door(doorObj)
+    door(doorObj),
+    irq(irqObj)
 {
-  advertise(cSknDoorID)
-    .setName("State")
-    .setDatatype("enum")
-    .setRetained(true);
-    // .setFormat("IDLE,DOWN,MOVING_UP,UP,MOVING_DOWN,STOPPED")
-
-  advertise(cSknPosID)
-    .setName("Position")
-    .setDatatype("integer")
-    .setUnit("%")
-    .setFormat("0:100")
-    .settable();
-
-  printCaption();
+   printCaption();
 }
 
 /**
@@ -84,6 +71,7 @@ bool SknGarageDoor::handleInput(const HomieRange& range, const String& property,
  *
  */
 void SknGarageDoor::onReadyToOperate() {
+  enableAutomatons();
   Homie.getLogger()
       << "〽 "
       << "Node: " << getName()
@@ -96,6 +84,11 @@ void SknGarageDoor::onReadyToOperate() {
  */
 void SknGarageDoor::setDoorState(char *_state) {
   cSknDoorState = _state;
+  Homie.getLogger()
+      << "〽 "
+      << "Node: " << getName()
+      << " Door State " << cSknDoorState
+      << endl;  
   setProperty(cSknDoorID).send(cSknDoorState);
 }
 /**
@@ -103,16 +96,21 @@ void SknGarageDoor::setDoorState(char *_state) {
  */
 void SknGarageDoor::setDoorPosition(unsigned int _position) {
   iDoorPosition = (int)_position;
+  Homie.getLogger()
+      << "〽 "
+      << "Node: " << getName()
+      << " Door Position " << iDoorPosition
+      << endl;
   setProperty(cSknPosID).send(String(iDoorPosition));
 }
 
 /**
- *
+ * @brief 
+ * 
  */
-void SknGarageDoor::setup() {
-  
+void SknGarageDoor::enableAutomatons() {
   if(vbOne) {
-    ranger.begin(dataReadyPin, 1000);       // vl53l1x line of sight distance measurement
+    ranger.begin(dataReadyPin, 1000).stop();       // vl53l1x line of sight distance measurement
 
     irq.begin(dataReadyPin, 30, true, true) // ranger interrupt pin when data ready
       .trace( Serial )
@@ -126,10 +124,35 @@ void SknGarageDoor::setup() {
     vbOne=false;
   }
 }
+/**
+ *
+ */
+void SknGarageDoor::setup() {
+   advertise(cSknDoorID)
+    .setName("State")
+    .setDatatype("enum")
+    .setRetained(true);
+    // .setFormat("IDLE,DOWN,MOVING_UP,UP,MOVING_DOWN,STOPPED")
+
+  advertise(cSknPosID)
+    .setName("Position")
+    .setDatatype("integer")
+    .setUnit("%")
+    .setFormat("0:100")
+    .settable();
+
+  Homie.getLogger()
+      << "〽 "
+      << "Node: " << getName()
+      << " SknGarageDoor::setup() " << vbOne
+      << endl;
+}
 
 /**
  *
  */
 void SknGarageDoor::loop() {
-  automaton.run();
+  if(!vbOne) {
+    automaton.run();
+  }
 }
