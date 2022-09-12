@@ -9,7 +9,6 @@ SknAtmDoor::SknAtmDoor(uint8_t relayPin, SknLoxRanger& lox)
     uiRelayPin(relayPin),
     ranger(lox)
  { 
-
     pinMode(uiRelayPin, OUTPUT); // Door operator
     digitalWrite(uiRelayPin, LOW); // Init door to off
     on = false;
@@ -37,24 +36,25 @@ SknAtmDoor& SknAtmDoor::begin()
 /*
  * Relay management
 */
-SknAtmDoor& SknAtmDoor::relayPause() {
-    delay(10);
+SknAtmDoor& SknAtmDoor::relayPause(unsigned int _ms) {
+    unsigned long int time_delay = millis() + _ms;
+    while (millis() < time_delay){}
     return *this;
 }
 SknAtmDoor& SknAtmDoor::relayStart() {
     digitalWrite(uiRelayPin, HIGH);
-    delay(384); 
+    relayPause(384); 
     digitalWrite(uiRelayPin, LOW); 
     return *this;    
 }
 SknAtmDoor& SknAtmDoor::relayStop() {
     digitalWrite(uiRelayPin, HIGH);
-    delay(64); 
+    relayPause(64); 
     digitalWrite(uiRelayPin, LOW); 
     return *this;    
 }
 SknAtmDoor& SknAtmDoor::relayChangeDirection() {
-    relayStop().relayPause().relayStart();
+    relayStop().relayPause(10).relayStart();
     return *this;    
 }
 
@@ -90,17 +90,18 @@ int SknAtmDoor::event(int id) {
     switch (id)
     {
     case EVT_STEP:
-            Serial.printf("[EVT_STEP]Pos %d reached, request was %d, eReq:%s, state:%s\n", uiEstimatedPosition, uiRequestedPosition, mapstate(eRequestedDirection), mapstate(state()));
-        return ( uiRequestedPosition != uiEstimatedPosition );
+            // Serial.printf("[EVT_STEP]Pos %d reached, request was %d, eReq:%s, state:%s\n", uiEstimatedPosition, uiRequestedPosition, mapstate(eRequestedDirection), mapstate(state()));
+        // return ( uiRequestedPosition != uiEstimatedPosition );
     case EVT_DOWN: // dn=100      pos=50
             // Serial.printf("[EVT_DOWN]Pos %d reached, request was %d, eReq:%s, state:%s\n", uiEstimatedPosition, uiRequestedPosition, mapstate(eRequestedDirection), mapstate(state()));
-        return ( eRequestedDirection != state());
+        // return ( eRequestedDirection != state());
     case EVT_STOP:
             // Serial.printf("[EVT_STOP]Pos %d reached, request was %d, eReq:%s, state:%s\n", uiEstimatedPosition, uiRequestedPosition, mapstate(eRequestedDirection), mapstate(state()));
-        return ( uiEstimatedPosition != uiRequestedPosition);
+        // return ( uiEstimatedPosition != uiRequestedPosition);
     case EVT_UP:   // up=0        pos=50
             // Serial.printf("[EVT_UP]Pos %d reached, request was %d, eReq:%s, state:%s\n", uiEstimatedPosition, uiRequestedPosition, mapstate(eRequestedDirection), mapstate(state()));
-        return ( eRequestedDirection != state() );
+        // return ( eRequestedDirection != state() );
+        break;
     case EVT_POS_REACHED:
         if( uiRequestedPosition == uiEstimatedPosition ) {
             // Serial.printf("[EVT_POS_REACHED]Pos %d reached, request was %d, eReq:%s, state:%s\n", uiEstimatedPosition, uiRequestedPosition, mapstate(eRequestedDirection), mapstate(state()));
@@ -152,7 +153,7 @@ void SknAtmDoor::action(int id)
         if(uiRequestedPosition==uiEstimatedPosition) {
             trigger(EVT_STEP);
         }
-        Serial.printf("^ SknAtmDoor::Action() ep=%d, rp=%d\n", uiEstimatedPosition, uiRequestedPosition);
+        // Serial.printf("^ SknAtmDoor::Action() ep=%d, rp=%d, eReq:%s, state:%s\n", uiEstimatedPosition, uiRequestedPosition, mapstate(eRequestedDirection), mapstate(state()));
         break;
     }
 }
@@ -240,7 +241,7 @@ SknAtmDoor& SknAtmDoor::setDoorPosition(uint8_t currentPosition) {
         iSampleCount = 0;
     }
 
-    Serial.printf("SknAtmDoor::setDoorPosition(%d) Position:%d, Moving:%s, sReq:%s, sCur:%s, vLow:%d, vHigh:%d", 
+    Serial.printf("SknAtmDoor::setDoorPosition(%d) Position:%d, Moving:%s, sReq:%s, sCur:%s, vLow:%d, vHigh:%d\n", 
         iSampleCount, currentPosition, (bDirection ? "UP" : "DOWN"), 
         mapstate(eRequestedDirection), mapstate(state()), 
         iaDirection[0], iaDirection[iSamples]);

@@ -13,10 +13,9 @@ SknLoxRanger::SknLoxRanger( ) {
 /**
  * VL53L1x Device Init
  */
-SknLoxRanger& SknLoxRanger::begin(int gpioPin, unsigned int interMeasurementDurationMS ) {
+SknLoxRanger& SknLoxRanger::begin( unsigned int interMeasurementDurationMS=1000 ) {
   unsigned long int time_now = millis();
 
-  pinGPIO = gpioPin;
   uiIinterMeasurementDuration=interMeasurementDurationMS;
 
   if (!lox.init())

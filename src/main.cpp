@@ -92,16 +92,7 @@ void readDoorPositionCallback(int idx, int v, int up ) {
   door.setDoorPosition( posValue );
   doorNode.setDoorPosition( posValue );
 
-  Serial.printf("Door position = %ld, idx=%d, v=%d, up=%d\n", posValue, idx,v,up);
-}  
-/*
- * Callback for Door State
-*/
-void readDoorStateCallback(int idx, int v, int up ) {
-  const char *_state = door.mapstate(v);
-  doorNode.setDoorState( (char *)_state );
-
-  Serial.printf("Door State = %s\n", _state);
+  Serial.printf("[MAIN] Door position = %ld, idx=%d, v=%d, up=%d\n", posValue, idx,v,up);
 }  
 
 /*

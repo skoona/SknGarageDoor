@@ -33,7 +33,6 @@ bool SknGarageDoor::handleInput(const HomieRange& range, const String& property,
   {
     if (isDigit(value.charAt(0))) {
       uint8_t perValue = value.toInt();
-      Homie.getLogger() << cIndent << "Door is MOVING to Position: " << perValue << endl;
 			if (perValue > 100) return false;
       door.cmd_pos(perValue);
       setProperty(cSknDoorID).send(cSknDoorState);
@@ -41,14 +40,12 @@ bool SknGarageDoor::handleInput(const HomieRange& range, const String& property,
      rc = true;
 
     } else if (value.equalsIgnoreCase("up")) {
-      Homie.getLogger() << cIndent << "Door is MOVING_UP" << endl;
       door.cmd_up();
       setProperty(cSknDoorID).send(cSknDoorState);
       setProperty(cSknPosID).send(String(iDoorPosition));
      rc = true;
 
     } else if (value.equalsIgnoreCase("down")) {
-      Homie.getLogger() << cIndent << "Door is MOVING_DOWN" << endl;
       door.cmd_down();
       setProperty(cSknDoorID).send(cSknDoorState);
       setProperty(cSknPosID).send(String(iDoorPosition));
@@ -56,7 +53,6 @@ bool SknGarageDoor::handleInput(const HomieRange& range, const String& property,
 
     } else if (value.equalsIgnoreCase("stop")) {
       door.cmd_stop();
-      Homie.getLogger() << cIndent << "Door is STOPPED" << endl;
       setProperty(cSknDoorID).send(cSknDoorState);
       setProperty(cSknPosID).send(String(iDoorPosition));
      rc = true;
@@ -71,7 +67,6 @@ bool SknGarageDoor::handleInput(const HomieRange& range, const String& property,
  *
  */
 void SknGarageDoor::onReadyToOperate() {
-  enableAutomatons();
   Homie.getLogger()
       << "〽 "
       << "Node: " << getName()
@@ -110,10 +105,10 @@ void SknGarageDoor::setDoorPosition(unsigned int _position) {
  */
 void SknGarageDoor::enableAutomatons() {
   if(vbOne) {
-    ranger.begin(dataReadyPin, 1000).stop();       // vl53l1x line of sight distance measurement
+    ranger.begin( 1000);       // vl53l1x line of sight distance measurement
 
     irq.begin(dataReadyPin, 30, true, true) // ranger interrupt pin when data ready
-      .trace( Serial )
+      // .trace( Serial )
       .onChange(HIGH, readDoorPositionCallback );
 
     door.begin()                  // door relay and operational logic
@@ -140,6 +135,9 @@ void SknGarageDoor::setup() {
     .setUnit("%")
     .setFormat("0:100")
     .settable();
+    // Commands: digits:0-100, UP, DOWN, STOP
+
+  enableAutomatons();
 
   Homie.getLogger()
       << "〽 "

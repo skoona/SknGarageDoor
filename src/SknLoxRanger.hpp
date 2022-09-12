@@ -18,13 +18,12 @@ class SknLoxRanger {
 public:
   SknLoxRanger();
 
-  SknLoxRanger& begin(int gpioPin, unsigned int interMeasurementDurationMS );
+  SknLoxRanger& begin( unsigned int interMeasurementDurationMS );
   SknLoxRanger&  start();
   unsigned int readValues(bool wait);
   void stop();
 
 protected:
-  int pinGPIO;
   unsigned int uiDistanceValue = 0;
   unsigned int uiIinterMeasurementDuration;
   

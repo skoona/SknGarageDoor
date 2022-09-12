@@ -46,7 +46,7 @@ private:
 
     /*
      * Implement external effects */
-    SknAtmDoor& relayPause();
+    SknAtmDoor& relayPause(unsigned int _ms);
     SknAtmDoor& relayStart();
     SknAtmDoor& relayStop();
     SknAtmDoor& relayChangeDirection();
