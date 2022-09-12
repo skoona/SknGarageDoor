@@ -10,14 +10,13 @@
 #include <Wire.h>
 #include "SknLoxRanger.hpp"
 #include "SknAtmDoor.hpp"
-
-extern void readDoorPositionCallback(int idx, int v, int up );
+#include "SknAtmDigital.hpp"
 
 class SknGarageDoor : public HomieNode {
 
 public:
  
-  SknGarageDoor(const char *id, const char *name, const char *cType, int rangerReadyPin, Atm_digital& irqObj, SknLoxRanger& rangerObj, SknAtmDoor& doorObj);
+  SknGarageDoor(const char *id, const char *name, const char *cType, int rangerReadyPin, SknAtmDigital& irqObj, SknLoxRanger& rangerObj, SknAtmDoor& doorObj);
   void setDoorState(char *_state);
   void setDoorPosition(unsigned int _position);
 
@@ -45,5 +44,5 @@ private:
 
   SknLoxRanger& ranger;  // door position vl53l1x measurement
   SknAtmDoor& door;      // main door logic and relay
-  Atm_digital& irq;      // Ranger Position Automaton object
+  SknAtmDigital& irq;      // Ranger Position Automaton object
 };

@@ -4,7 +4,7 @@
  */
 #include "SknGarageDoor.hpp"
 
-SknGarageDoor::SknGarageDoor(const char *id, const char *name, const char *cType, int rangerReadyPin, Atm_digital& irqObj, SknLoxRanger& rangerObj, SknAtmDoor& doorObj) 
+SknGarageDoor::SknGarageDoor(const char *id, const char *name, const char *cType, int rangerReadyPin, SknAtmDigital& irqObj, SknLoxRanger& rangerObj, SknAtmDoor& doorObj) 
     : HomieNode(id, name, cType),
     dataReadyPin(rangerReadyPin),
     ranger(rangerObj),
@@ -33,31 +33,28 @@ bool SknGarageDoor::handleInput(const HomieRange& range, const String& property,
   {
     if (isDigit(value.charAt(0))) {
       uint8_t perValue = value.toInt();
-			if (perValue > 100) return false;
-      door.cmd_pos(perValue);
-      setProperty(cSknDoorID).send(cSknDoorState);
-      setProperty(cSknPosID).send(String(perValue));
-     rc = true;
+			if (perValue <= 100) {
+        door.cmd_pos(perValue);
+        rc = true;
+      }
 
     } else if (value.equalsIgnoreCase("up")) {
       door.cmd_up();
-      setProperty(cSknDoorID).send(cSknDoorState);
-      setProperty(cSknPosID).send(String(iDoorPosition));
-     rc = true;
+      rc = true;
 
     } else if (value.equalsIgnoreCase("down")) {
       door.cmd_down();
-      setProperty(cSknDoorID).send(cSknDoorState);
-      setProperty(cSknPosID).send(String(iDoorPosition));
-     rc = true;
+      rc = true;
 
     } else if (value.equalsIgnoreCase("stop")) {
       door.cmd_stop();
+      rc = true;
+    } 
+
+    if(rc) {
       setProperty(cSknDoorID).send(cSknDoorState);
       setProperty(cSknPosID).send(String(iDoorPosition));
-     rc = true;
-
-    } 
+    }
   }
 
   return rc;
@@ -109,12 +106,21 @@ void SknGarageDoor::enableAutomatons() {
 
     irq.begin(dataReadyPin, 30, true, true) // ranger interrupt pin when data ready
       // .trace( Serial )
-      .onChange(HIGH, readDoorPositionCallback );
+	    .onChange(HIGH, [this]( int idx, int v, int up ) { 
+          long posValue =constrain( map((long)ranger.readValues(false), 10, 1960, 0, 100), 0, 100);
+          door.setDoorPosition( posValue );
+          setDoorPosition( posValue );
+          Serial.printf("[MAIN]collectDoorPosition() Door position = %ld, idx=%d, v=%d, up=%d\n", posValue, idx,v,up);
+        }, 0);
 
     door.begin()                  // door relay and operational logic
       .trace( Serial )
       .onChange([this]( int idx, int v, int up ) { setDoorState((char *)door.mapstate(v));},0)
 	    .onPos([this]( int idx, int v, int up ) { setDoorPosition(v); },0);
+
+    ranger.start(); // collect 5ish positions on init
+    irq.cycle(5000);
+    ranger.stop();
 
     vbOne=false;
   }

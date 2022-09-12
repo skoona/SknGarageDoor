@@ -42,16 +42,12 @@ Configuration Settings section of data/Hhomie/config.json
 #include <Wire.h>
 #include "SknGarageDoor.hpp"
 #include "SknAtmDoor.hpp"
+#include "SknAtmDigital.hpp"
 
 extern "C"
 {
 #include <user_interface.h>
 }
-
-#define SDA 5
-#define SCL 4
-#define DEFAULT_HOLD_MS 400
-#define LOX_RUNTIME_SECONDS 30
 
 #define SKN_MOD_NAME "Garage Door Automation"
 #define SKN_MOD_VERSION "0.0.1"
@@ -62,38 +58,25 @@ extern "C"
 #define SKN_ID "SknGarageDoor"
 
 // Pins
-#define LOX_PIN_SDA   SDA
-#define LOX_PIN_SCL   SCL
-#define LOX_PIN_GPIO  13
-#define RELAY_PIN    16
+#define SDA 5
+#define SCL 4
+#define LOX_GPIO  13
+#define RELAY_GPIO     12
 
 #ifndef LED_BUILTIN
   #define LED_BUILTIN 4
 #endif
 
+
 /* Automaton Nodes 
 */
-Atm_digital irq;                    // handles data ready interrupt for ranger
-SknLoxRanger ranger;                // measures distance of door
-SknAtmDoor door(RELAY_PIN, ranger); // controls door relay and startng stopping of ranger
+SknAtmDigital irq;                   // handles data ready interrupt for ranger
+SknLoxRanger ranger;                 // measures distance of door
+SknAtmDoor door(RELAY_GPIO, ranger); // controls door relay and startng stopping of ranger
 
 /* Homie Nodes 
 */
-SknGarageDoor doorNode(SKN_ID, SKN_TITLE, SKN_TYPE, LOX_PIN_GPIO, irq, ranger, door); // communication interface
-
-/*
- * Callback for Ranger positioning
-*/
-void readDoorPositionCallback(int idx, int v, int up ) {
-  long posValue = (long)ranger.readValues(false);
-  long translatedValue = map(posValue, 10, 1960, 0, 100);
-  posValue = constrain(translatedValue, 0, 100);
-
-  door.setDoorPosition( posValue );
-  doorNode.setDoorPosition( posValue );
-
-  Serial.printf("[MAIN] Door position = %ld, idx=%d, v=%d, up=%d\n", posValue, idx,v,up);
-}  
+SknGarageDoor doorNode(SKN_ID, SKN_TITLE, SKN_TYPE, LOX_GPIO, irq, ranger, door); // communication interface
 
 /*
  * Callback for Homie Broadcasts
@@ -116,7 +99,7 @@ void setup()
     Homie.disableLogging();
   }
 
-  Wire.begin(LOX_PIN_SDA, LOX_PIN_SCL);
+  Wire.begin(SDA, SCL);
 
   Homie_setFirmware(SKN_MOD_NAME, SKN_MOD_VERSION);
   Homie_setBrand(SKN_MOD_BRAND);
