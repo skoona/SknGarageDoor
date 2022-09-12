@@ -11,6 +11,8 @@ SknAtmDoor::SknAtmDoor(uint8_t relayPin, SknLoxRanger& lox)
  { 
     pinMode(uiRelayPin, OUTPUT); // Door operator
     digitalWrite(uiRelayPin, LOW); // Init door to off
+    uiEstimatedPosition = 100;
+    uiRequestedPosition = 100;
     on = false;
 };
 
@@ -26,8 +28,6 @@ SknAtmDoor& SknAtmDoor::begin()
         /*        DOWN */              ENT_DOWN,           -1,        -1,          -1,             -1,      STOPPED,    MOVING_UP,              -1,   -1,
     };
     // clang-format on
-    uiEstimatedPosition = 100;
-    uiRequestedPosition = 100;
     Machine::begin(state_table, ELSE);
 
     return *this;

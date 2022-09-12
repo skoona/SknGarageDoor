@@ -109,7 +109,7 @@ void SknGarageDoor::enableAutomatons() {
 	    .onChange(HIGH, [this]( int idx, int v, int up ) { 
           long posValue =constrain( map((long)ranger.readValues(false), 10, 1960, 0, 100), 0, 100);
           door.setDoorPosition( posValue );
-          setDoorPosition( posValue );
+          // setDoorPosition( posValue ); duplicate on onPos
           Serial.printf("[MAIN]collectDoorPosition() Door position = %ld, idx=%d, v=%d, up=%d\n", posValue, idx,v,up);
         }, 0);
 
