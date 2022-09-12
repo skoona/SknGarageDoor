@@ -27,6 +27,8 @@ protected:
   virtual void loop() override;
 
 private:
+#define MM_MIN 10
+#define MM_MAX 1960
 
   volatile bool vbOne=false;
 

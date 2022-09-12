@@ -64,7 +64,8 @@ private:
     uint8_t uiRequestedPosition;
     uint8_t uiRelayPin;
     bool on;
-    
+    uint8_t uiLastEstimatedPosition=0;
+
     #define MAX_SAMPLES 5
     int iSamples = 0;
     int iSampleCount = 0;

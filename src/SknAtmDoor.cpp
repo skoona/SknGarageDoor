@@ -123,11 +123,11 @@ void SknAtmDoor::action(int id)
 {
     switch (id)
     {
-    case ATM_ON_SWITCH:
-    Serial.printf("[action]ATM_ON_SWITCH id %d, nextTrigger %d, current %s, next %s, eReq:%s\n", 
-        id, next_trigger, 
-        mapstate(current),  mapstate(next), mapstate(eRequestedDirection));
-        break;
+    // case ATM_ON_SWITCH:
+    // Serial.printf("[action]ATM_ON_SWITCH id %d, nextTrigger %d, current %s, next %s, eReq:%s\n", 
+    //     id, next_trigger, 
+    //     mapstate(current),  mapstate(next), mapstate(eRequestedDirection));
+    //     break;
     case ENT_STOPPED:
         moveHalt();
         // uiEstimatedPosition = uiRequestedPosition;
@@ -156,8 +156,13 @@ void SknAtmDoor::action(int id)
         break;
     case LP_POS:
         if(uiRequestedPosition==uiEstimatedPosition) {
+            push(connectors, ON_POS, 0, uiEstimatedPosition, 0);
             trigger(EVT_STEP);
         }
+        if (uiLastEstimatedPosition != uiEstimatedPosition) {
+            uiLastEstimatedPosition = uiEstimatedPosition;
+            push(connectors, ON_POS, 0, uiEstimatedPosition, 0);
+         }
         // Serial.printf("^ SknAtmDoor::Action() ep=%d, rp=%d, eReq:%s, state:%s\n", uiEstimatedPosition, uiRequestedPosition, mapstate(eRequestedDirection), mapstate(state()));
         break;
     }
@@ -195,11 +200,9 @@ SknAtmDoor& SknAtmDoor::cmd_pos(uint8_t destPos) {
                 //  100       0    
     int8_t delta = destPos - uiEstimatedPosition;
     if (delta > 0 || destPos == 100) {
-        Serial.printf("%d steps to go up\n", delta);
         eRequestedDirection = MOVING_UP;
         trigger(EVT_UP);
     } else {
-        Serial.printf("%d steps to go down\n", -delta);
         eRequestedDirection = MOVING_DOWN;
         trigger(EVT_DOWN);
     }
@@ -240,13 +243,13 @@ SknAtmDoor& SknAtmDoor::setDoorPosition(uint8_t currentPosition) {
     if((iSampleCount >= MAX_SAMPLES) && (iaDirection[0] > iaDirection[iSamples])) { // moving up 20 > 5 = UP[0]
         bDirection = true;
         if (eRequestedDirection != current) {
-            // moveChgDir();
+            moveChgDir();
             iSampleCount = 0;
         }
 
     } else { // moving down
         if (eRequestedDirection != current) {
-            // moveChgDir();
+            moveChgDir();
             iSampleCount = 0;
         }
     }
