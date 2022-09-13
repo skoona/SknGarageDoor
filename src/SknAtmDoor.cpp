@@ -144,8 +144,8 @@ void SknAtmDoor::action(int id)
             uiLastEstimatedPosition = uiEstimatedPosition;
             push(connectors, ON_POS, 0, uiEstimatedPosition, 0);
          }
-         // match within 2
-        if((uiRequestedPosition==uiEstimatedPosition) || (abs(uiRequestedPosition-uiEstimatedPosition)<=2)) {
+         // match within 1
+        if((uiRequestedPosition==uiEstimatedPosition) || (abs(uiRequestedPosition-uiEstimatedPosition)<=1)) {
             trigger(EVT_POS_REACHED);
             push(connectors, ON_POS, 0, uiEstimatedPosition, 0);
         }
