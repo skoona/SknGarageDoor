@@ -183,14 +183,14 @@ SknAtmDoor& SknAtmDoor::cmd_pos(uint8_t destPos) {
     // 100ish is down
     // 0ish is up
     uiRequestedPosition = destPos;
-                //  100       0    
-    int8_t delta = destPos - uiEstimatedPosition;
-    if (delta > 0 || destPos == 100) {
+    if (destPos < uiEstimatedPosition) {
         eRequestedDirection = MOVING_UP;
         trigger(EVT_UP);
-    } else {
+    } else if (destPos > uiEstimatedPosition) {
         eRequestedDirection = MOVING_DOWN;
         trigger(EVT_DOWN);
+    } else if (destPos == uiEstimatedPosition) {
+         trigger(EVT_STOP);
     }
     return *this;
 }
