@@ -78,7 +78,7 @@ unsigned int SknLoxRanger::readValues(bool wait=false)
   }
 
   for (int idx = 0; idx < capacity; idx++) {
-    if(distances[idx+1]>=10000) {
+    if(distances[idx+1]>=5000) {
       distances[idx] = value;
     }else {
       distances[idx] = distances[idx+1]; // move all down
@@ -91,7 +91,7 @@ unsigned int SknLoxRanger::readValues(bool wait=false)
     sum += distances[capacity];
     avg = (sum / (capacity +1));
     uiDistanceValue = (unsigned int) avg;
-    uiDistanceValue = value;
+    // uiDistanceValue = value;
   } else {
     distances[capacity] = uiDistanceValue;
   }

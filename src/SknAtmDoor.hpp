@@ -38,7 +38,7 @@ public:
     int state(void);
 
     enum eStates { STOPPED, MOVING_UP, UP, MOVING_DOWN, DOWN }; // STATES
-    enum eEvents { EVT_STEP, EVT_DOWN, EVT_STOP, EVT_UP, EVT_POS_REACHED, ELSE }; // EVENTS
+    enum eEvents { EVT_DOWN, EVT_STOP, EVT_UP, EVT_POS_REACHED, ELSE }; // EVENTS
 
 private:
     enum eActions { ENT_STOPPED, ENT_MOVING_UP, ENT_UP, ENT_MOVING_DOWN, ENT_DOWN, LP_POS }; // ACTIONS
@@ -63,14 +63,12 @@ private:
     uint8_t uiEstimatedPosition;
     uint8_t uiRequestedPosition;
     uint8_t uiRelayPin;
-    bool on;
     uint8_t uiLastEstimatedPosition=0;
 
     #define MAX_SAMPLES 5
+    int iChangeDirectionCounter=0;
     int iSamples = 0;
     int iSampleCount = 0;
-    bool bUpOrDown = false;  // true up,  false down
-    bool bRequestedDirection = false; // true up,  false down
     int eRequestedDirection = STOPPED;
     unsigned int iaDirection[MAX_SAMPLES+3]; // verify current direction
 

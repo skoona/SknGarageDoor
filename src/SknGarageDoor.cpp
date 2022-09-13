@@ -110,32 +110,29 @@ void SknGarageDoor::setDoorPosition(unsigned int _position) {
  */
 void SknGarageDoor::enableAutomatons() {
   if(!vbOne) {
+    vbOne=true;
+
     ranger.begin( 1000);       // vl53l1x line of sight distance measurement
 
     irq.begin(dataReadyPin, 30, true, true) // ranger interrupt pin when data ready
-      // .trace( Serial )
 	    .onChange(HIGH, [this]( int idx, int v, int up ) { 
-          long posValue =constrain( map((long)ranger.readValues(false), MM_MIN, MM_MAX, 0, 100), 0, 100);
-          door.setDoorPosition( posValue );
-          // Serial.printf("[MAIN]onChange(irq) Door position = %ld, idx=%d, v=%d, up=%d\n", posValue, idx,v,up);
-        }, 0);
+        long posValue =constrain( map((long)ranger.readValues(false), MM_MIN, MM_MAX, 0, 100), 0, 100);
+        door.setDoorPosition( posValue );
+      }, 0);
 
     door.begin()                  // door relay and operational logic
       .trace( Serial )
       .onChange([this]( int idx, int v, int up ) { 
         setDoorState((char *)door.mapstate(v));
-        // Serial.printf("[MAIN]onChange(door) Door state = %s, idx=%d, v=%d, up=%d\n", (char *)door.mapstate(v), idx,v,up);
-        },0)
+      },0)
 	    .onPos([this]( int idx, int v, int up ) { 
         setDoorPosition(v); 
-        // Serial.printf("[MAIN]onPos(door) callback() Door position = %d, idx=%d, v=%d, up=%d\n", v, idx,v,up);
-        },0);
+      },0);
 
     ranger.start(); // collect 5ish positions on init
-    irq.cycle(5000);
+    irq.cycle(5000); // load IRQ average counter
     ranger.stop();
 
-    vbOne=true;
   }
 }
 /**

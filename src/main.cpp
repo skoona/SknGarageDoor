@@ -69,6 +69,19 @@ extern "C"
 
 
 /* Automaton Nodes 
+  Door Command     Door Event              StateChange           Action
+  ---------------------------------------------------------------------------------------------------------------
+  Homie-cmd_pos    trigger(EVT_[UP,DOWN])  MOVING_[UP,DOWN]->UP  ENT_MOVING_[UP,DOWN]->move[Up,Dn](relay,ranger)
+  Homie-cmd_up     trigger(EVT_UP)         MOVING_UP->UP         ENT_MOVING_UP->moveUp(relay,ranger)
+  Homie-cmd_down   trigger(EVT_DOWN)       MOVING_DOWN->DOWN     ENT_MOVING_DOWN->moveDn(relay,ranger)
+  Homie-cmd_stop   trigger(EVT_STOP)       <any>->STOPPED        ENT_STOPPED->moveStp(relay,ranger)
+
+  Homie                                <--:OnChange_cb(state)
+  Homie                                <--:OnPos_cb(position)
+                    EVT_POS_REACHED        UP,DOWN               <--LP_POS->moveHalt(ranger)
+  Door.setDoorPosition()                                         moveChgDir(relay)                  
+  Irq.onChange_cb(dataReady)                                     translate mm to range and send to Doors
+
 */
 SknAtmDigital irq;                   // handles data ready interrupt for ranger
 SknLoxRanger ranger;                 // measures distance of door

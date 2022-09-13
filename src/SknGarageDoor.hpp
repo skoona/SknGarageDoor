@@ -27,8 +27,13 @@ protected:
   virtual void loop() override;
 
 private:
-#define MM_MIN 10
-#define MM_MAX 1960
+/*
+ * Door travel: 86.5" or 2198 mm
+ * Mount point: 13" or 330 mm
+ * maximum range: 2528 mm
+*/
+#define MM_MIN 330
+#define MM_MAX 2528
 
   volatile bool vbOne=false;
 
