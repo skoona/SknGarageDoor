@@ -37,11 +37,11 @@ public:
     const char * mapstate(int state);
     int state(void);
 
-    enum eStates { STOPPED, MOVING_UP, UP, MOVING_DOWN, DOWN }; // STATES
-    enum eEvents { EVT_DOWN, EVT_STOP, EVT_UP, EVT_POS_REACHED, ELSE }; // EVENTS
+    enum eStates { STOPPED, MOVING_UP, UP, MOVING_DOWN, DOWN, MOVING_POS }; // STATES
+    enum eEvents { EVT_DOWN, EVT_STOP, EVT_UP, EVT_POS, EVT_POS_REACHED, ELSE }; // EVENTS
 
 private:
-    enum eActions { ENT_STOPPED, ENT_MOVING_UP, ENT_UP, ENT_MOVING_DOWN, ENT_DOWN, LP_POS }; // ACTIONS
+    enum eActions { ENT_STOPPED, ENT_MOVING_UP, ENT_UP, ENT_MOVING_DOWN, ENT_DOWN, ENT_POS, LP_POS }; // ACTIONS
     enum eConnectors { ON_CHANGE, ON_POS, CONN_MAX }; // CONNECTORS
 
     /*
@@ -50,11 +50,10 @@ private:
     SknAtmDoor& relayStart();
     SknAtmDoor& relayStop();
     SknAtmDoor& relayChangeDirection();
-    void moveUp();
-    void moveDn();
-    void moveStp();
-    void moveHalt();
-    void moveChgDir();
+    void doorMove();
+    void doorStop();
+    void doorHalt();
+    void doorChangeDirection();
 
     int event(int id);
     void action(int id);
@@ -66,6 +65,7 @@ private:
     uint8_t uiLastEstimatedPosition=0;
 
     #define MAX_SAMPLES 5
+    bool bChangeDirectionEnabled=false;
     int iChangeDirectionCounter=0;
     int iSamples = 0;
     int iSampleCount = 0;

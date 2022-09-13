@@ -19,12 +19,13 @@ SknAtmDoor& SknAtmDoor::begin()
 {
      // clang-format off
     const static state_t state_table[] PROGMEM = {
-        /*                             ON_ENTER       ON_LOOP    ON_EXIT      EVT_DOWN      EVT_STOP        EVT_UP  EVT_POS_REACHED  ELSE */
-        /*     STOPPED */           ENT_STOPPED,           -1,        -1,  MOVING_DOWN,           -1,    MOVING_UP,              -1,   -1,
-        /*   MOVING_UP */         ENT_MOVING_UP,       LP_POS,        -1,  MOVING_DOWN,      STOPPED,           -1,              UP,   -1,
-        /*          UP */                ENT_UP,           -1,        -1,  MOVING_DOWN,      STOPPED,           -1,              -1,   -1,
-        /* MOVING_DOWN */       ENT_MOVING_DOWN,       LP_POS,        -1,           -1,      STOPPED,    MOVING_UP,            DOWN,   -1,
-        /*        DOWN */              ENT_DOWN,           -1,        -1,           -1,      STOPPED,    MOVING_UP,              -1,   -1,
+        /*                             ON_ENTER       ON_LOOP    ON_EXIT      EVT_DOWN      EVT_STOP        EVT_UP       EVT_POS  EVT_POS_REACHED  ELSE */
+        /*     STOPPED */           ENT_STOPPED,           -1,        -1,  MOVING_DOWN,           -1,    MOVING_UP,   MOVING_POS,              -1,   -1,
+        /*   MOVING_UP */         ENT_MOVING_UP,       LP_POS,        -1,  MOVING_DOWN,      STOPPED,           -1,           -1,              UP,   -1,
+        /*          UP */                ENT_UP,           -1,        -1,  MOVING_DOWN,      STOPPED,           -1,   MOVING_POS,              -1,   -1,
+        /* MOVING_DOWN */       ENT_MOVING_DOWN,       LP_POS,        -1,           -1,      STOPPED,    MOVING_UP,           -1,            DOWN,   -1,
+        /*        DOWN */              ENT_DOWN,           -1,        -1,           -1,      STOPPED,    MOVING_UP,   MOVING_POS,              -1,   -1,
+        /*  MOVING_POS */              ENT_POS,        LP_POS,        -1,           -1,      STOPPED,           -1,           -1,         STOPPED,   -1
     };
     // clang-format on
     Machine::begin(state_table, ELSE);
@@ -53,7 +54,7 @@ SknAtmDoor& SknAtmDoor::relayStop() {
     return *this;    
 }
 SknAtmDoor& SknAtmDoor::relayChangeDirection() {
-    relayStop().relayPause(10).relayStart();    //    HOLD FOR LATER EVALUATION
+    relayStop().relayPause(10).relayStart();    
     Serial.printf("^ SknAtmDoor::relayChangeDirection() ep=%d, rp=%d, eReq:%s, state:%s\n", uiEstimatedPosition, uiRequestedPosition, mapstate(eRequestedDirection), mapstate(state()));
     return *this;    
 }
@@ -61,22 +62,18 @@ SknAtmDoor& SknAtmDoor::relayChangeDirection() {
 /*
  *  external effects Action helpers
 */
-void SknAtmDoor::moveUp() { 
+void SknAtmDoor::doorMove() { 
     ranger.start();
     relayStart();
 }
-void SknAtmDoor::moveDn() { 
-    ranger.start(); 
-    relayStart();
-}
-void SknAtmDoor::moveStp() { 
+void SknAtmDoor::doorStop() { 
     relayStop();
     ranger.stop(); 
 }
-void SknAtmDoor::moveHalt() { 
+void SknAtmDoor::doorHalt() { 
     ranger.stop(); 
 }
-void SknAtmDoor::moveChgDir() { 
+void SknAtmDoor::doorChangeDirection() { 
     relayChangeDirection();
 }
 
@@ -90,6 +87,7 @@ int SknAtmDoor::event(int id) {
     case EVT_DOWN: // dn=100      pos=50
     case EVT_STOP:
     case EVT_UP:   // up=0        pos=50
+    case EVT_POS:   // up=0        pos=50
     case EVT_POS_REACHED:
          return (id == next_trigger);
     }
@@ -114,29 +112,34 @@ void SknAtmDoor::action(int id)
     //     mapstate(current),  mapstate(next), mapstate(eRequestedDirection));
     //     break;
     case ENT_STOPPED:
-        moveHalt();
+        doorHalt();
         // uiEstimatedPosition = uiRequestedPosition;
+        bChangeDirectionEnabled=false;
         push(connectors, ON_POS, 0, uiEstimatedPosition, 0);
         push(connectors, ON_CHANGE, 0, state(), 0);
         break;
     case ENT_MOVING_UP:
-        moveUp();
+        doorMove();
         push(connectors, ON_CHANGE, 0, state(), 0);
         if (uiEstimatedPosition % 2 == 0)
             push(connectors, ON_POS, 0, uiEstimatedPosition, 0);
         break;
     case ENT_UP:
-        moveHalt();
+        doorHalt();
         push(connectors, ON_CHANGE, 0, state(), 0);
         break;
     case ENT_MOVING_DOWN:
-        moveDn();
+        doorMove();
         push(connectors, ON_CHANGE, 0, state(), 0);
         if (uiEstimatedPosition % 2 == 0)
             push(connectors, ON_POS, 0, uiEstimatedPosition, 0);
         break;
     case ENT_DOWN:
-        moveHalt();
+        doorHalt();
+        push(connectors, ON_CHANGE, 0, state(), 0);
+        break;
+    case ENT_POS:
+        doorMove();
         push(connectors, ON_CHANGE, 0, state(), 0);
         break;
     case LP_POS:
@@ -183,14 +186,14 @@ SknAtmDoor& SknAtmDoor::cmd_pos(uint8_t destPos) {
     // 100ish is down
     // 0ish is up
     uiRequestedPosition = destPos;
-    if (destPos < uiEstimatedPosition) {
-        eRequestedDirection = MOVING_UP;
-        trigger(EVT_UP);
-    } else if (destPos > uiEstimatedPosition) {
-        eRequestedDirection = MOVING_DOWN;
-        trigger(EVT_DOWN);
+    if (destPos != uiEstimatedPosition) {
+        eRequestedDirection = MOVING_POS;
+        bChangeDirectionEnabled=true;
+        trigger(EVT_POS);
     } else if (destPos == uiEstimatedPosition) {
-         trigger(EVT_STOP);
+        eRequestedDirection = STOPPED;
+        bChangeDirectionEnabled=false;
+        trigger(EVT_STOP);
     }
     return *this;
 }
@@ -227,7 +230,7 @@ SknAtmDoor& SknAtmDoor::setDoorPosition(uint8_t currentPosition) {
 
     /*
      * which way are we moving? */
-    if ((iSampleCount >= MAX_SAMPLES) && (eRequestedDirection==MOVING_UP || eRequestedDirection==MOVING_DOWN) ) { 
+    if ((iSampleCount >= MAX_SAMPLES) && (eRequestedDirection==MOVING_UP || eRequestedDirection==MOVING_DOWN || eRequestedDirection==MOVING_POS )) { 
         if (iChangeDirectionCounter<0) { iChangeDirectionCounter=0; }
         /* 
          * a > b = UP
@@ -241,15 +244,15 @@ SknAtmDoor& SknAtmDoor::setDoorPosition(uint8_t currentPosition) {
             iChangeDirectionCounter++;
         } else iChangeDirectionCounter--;
 
-        if(iChangeDirectionCounter>=MAX_SAMPLES) { // must be x in a row
-            moveChgDir();
+        if(iChangeDirectionCounter>=MAX_SAMPLES && bChangeDirectionEnabled) { // must be x in a row
+            doorChangeDirection();
             iChangeDirectionCounter=0;
         }
 
-        Serial.printf("SknAtmDoor::setDoorPosition(%d:%d) Position:%d, Moving:%s, sReq:%s, sCur:%s, sNext:%s, A:%d, B:%d\n", 
+        Serial.printf("SknAtmDoor::setDoorPosition(%d:%d) Position:%d, Moving:%s, sReq:%s, sCur:%s, sNext:%s, chgDir:%s, A:%d, B:%d\n", 
             iSampleCount, iChangeDirectionCounter, currentPosition, mapstate(eDir), 
             mapstate(eRequestedDirection), mapstate(current),  mapstate(next), 
-            iaDirection[0], iaDirection[iSamples]);
+            (bChangeDirectionEnabled ? "True" : "False"), iaDirection[0], iaDirection[iSamples]);
     }
 
 
@@ -299,6 +302,6 @@ SknAtmDoor& SknAtmDoor::onPos( atm_cb_lambda_t callback, int idx ) {
  */
 SknAtmDoor& SknAtmDoor::trace( Stream & stream ) {
   Machine::setTrace( &stream, atm_serial_debug::trace,
-    "DOOR\0EVT_DOWN\0EVT_STOP\0EVT_UP\0EVT_POS_REACHED\0ELSE\0STOPPED\0MOVING_UP\0UP\0MOVING_DOWN\0DOWN" );
+    "DOOR\0EVT_DOWN\0EVT_STOP\0EVT_UP\0EVT_POS\0EVT_POS_REACHED\0ELSE\0STOPPED\0MOVING_UP\0UP\0MOVING_DOWN\0DOWN\0MOVING_POS" );
   return *this;
 }

@@ -32,11 +32,9 @@ bool SknGarageDoor::handleInput(const HomieRange& range, const String& property,
   if (property.equalsIgnoreCase(cSknPosID))
   {
     if (isDigit(value.charAt(0))) {
-      uint8_t perValue = value.toInt();
-			if (perValue <= 100) {
-        door.cmd_pos(perValue);
-        rc = true;
-      }
+      uint8_t perValue = constrain(value.toInt(), 0, 100);
+      door.cmd_pos(perValue);
+      rc = true;
 
     } else if (value.equalsIgnoreCase("up")) {
       door.cmd_up();
@@ -130,7 +128,7 @@ void SknGarageDoor::enableAutomatons() {
       },0);
 
     ranger.start(); // collect 5ish positions on init
-    irq.cycle(5000); // load IRQ average counter
+    irq.cycle(2048); // load IRQ average counter
     ranger.stop();
 
   }
