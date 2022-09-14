@@ -5,9 +5,8 @@
   Rollershutter	Roller shutter Item, typically used for blinds	
     Up
     Down 
-    Stop
-    Move 
-    Percent
+    Stop    
+    0:100 Percent
 
   This method provides a list of all data types that can be used to update the item state
 
@@ -29,13 +28,39 @@ Rollershutter	PercentType	 0...100
 
 
 Configuration Settings section of data/Hhomie/config.json
-  "settings": {
-      "relayHoldTimeMS": 400,
-      "positionIntervalSec": 60,
-      "duration": 45,
-      "rangerClosedMM": 2000,
-      "rangerOpenMM": 200 }                           
+  "settings": { }                           
 
+*
+* Automaton Notes: https://github.com/tinkerspy/Automaton/wiki/
+  
+  Door Command     Door Event              StateChange           Action
+  ---------------------------------------------------------------------------------------------------------------
+  Homie-cmd_pos    trigger(EVT_POS)        MOVING_POS->STOPPED   ENT_POS->doorMove(relay,ranger)
+  Homie-cmd_up     trigger(EVT_UP)         MOVING_UP->UP         ENT_MOVING_UP->doorMove(relay,ranger)
+  Homie-cmd_down   trigger(EVT_DOWN)       MOVING_DOWN->DOWN     ENT_MOVING_DOWN->doorMove(relay,ranger)
+  Homie-cmd_stop   trigger(EVT_STOP)       <any>->STOPPED        ENT_STOPPED->doorStop(relay,ranger)
+
+  Homie                                <--:OnChange_cb(state)
+  Homie                                <--:OnPos_cb(position)
+                    EVT_POS_REACHED        UP,DOWN,STOPPED     <--LP_POS->doorHalt(ranger)
+  Door.setDoorPosition_cb()                                         doorChangeDirection(relay)                  
+  Irq.onChange_cb(dataReady)                                     translate mm to range and send to Doors
+
+Note:
+  1. If input asks to move state to current state, request will be ignored
+  2. Ranger (VL53L1x) will cycle briefly on boot to fill its internal averaging buffer.
+  3. 100 is considered DOWN, with 0 considered UP.
+
+     [-- STATES --]   [------- Actions/External Outputs ----------]  [------------------------- Event/External Inputs -----------------------------]   
+                                 ON_ENTER       ON_LOOP    ON_EXIT      EVT_DOWN      EVT_STOP        EVT_UP       EVT_POS  EVT_POS_REACHED  ELSE 
+         STOPPED               ENT_STOPPED,           -1,        -1,  MOVING_DOWN,           -1,    MOVING_UP,   MOVING_POS,              -1,   -1,
+       MOVING_UP             ENT_MOVING_UP,       LP_POS,        -1,  MOVING_DOWN,      STOPPED,           -1,           -1,              UP,   -1,
+              UP                    ENT_UP,           -1,        -1,  MOVING_DOWN,      STOPPED,           -1,   MOVING_POS,              -1,   -1,
+     MOVING_DOWN           ENT_MOVING_DOWN,       LP_POS,        -1,           -1,      STOPPED,    MOVING_UP,           -1,            DOWN,   -1,
+            DOWN                  ENT_DOWN,           -1,        -1,           -1,      STOPPED,    MOVING_UP,   MOVING_POS,              -1,   -1,
+      MOVING_POS                   ENT_POS,       LP_POS,        -1,           -1,      STOPPED,           -1,           -1,         STOPPED,   -1
+
+                            --- actions() ---                                                    --- events() ---        
 */
 
 #include <Homie.hpp>
@@ -60,29 +85,13 @@ extern "C"
 // Pins
 #define SDA 5
 #define SCL 4
-#define LOX_GPIO  13
-#define RELAY_GPIO     12
+#define LOX_GPIO   13
+#define RELAY_GPIO 12
 
 #ifndef LED_BUILTIN
   #define LED_BUILTIN 4
 #endif
 
-
-/* Automaton Nodes 
-  Door Command     Door Event              StateChange           Action
-  ---------------------------------------------------------------------------------------------------------------
-  Homie-cmd_pos    trigger(EVT_[UP,DOWN])  MOVING_[UP,DOWN]->UP  ENT_MOVING_[UP,DOWN]->move[Up,Dn](relay,ranger)
-  Homie-cmd_up     trigger(EVT_UP)         MOVING_UP->UP         ENT_MOVING_UP->moveUp(relay,ranger)
-  Homie-cmd_down   trigger(EVT_DOWN)       MOVING_DOWN->DOWN     ENT_MOVING_DOWN->moveDn(relay,ranger)
-  Homie-cmd_stop   trigger(EVT_STOP)       <any>->STOPPED        ENT_STOPPED->moveStp(relay,ranger)
-
-  Homie                                <--:OnChange_cb(state)
-  Homie                                <--:OnPos_cb(position)
-                    EVT_POS_REACHED        UP,DOWN               <--LP_POS->moveHalt(ranger)
-  Door.setDoorPosition()                                         moveChgDir(relay)                  
-  Irq.onChange_cb(dataReady)                                     translate mm to range and send to Doors
-
-*/
 SknAtmDigital irq;                   // handles data ready interrupt for ranger
 SknLoxRanger ranger;                 // measures distance of door
 SknAtmDoor door(RELAY_GPIO, ranger); // controls door relay and startng stopping of ranger

@@ -17,8 +17,8 @@ class SknGarageDoor : public HomieNode {
 public:
  
   SknGarageDoor(const char *id, const char *name, const char *cType, int rangerReadyPin, SknAtmDigital& irqObj, SknLoxRanger& rangerObj, SknAtmDoor& doorObj);
-  void setDoorState(char *_state);
-  void setDoorPosition(unsigned int _position);
+  void setDoorState_cb(char *_state);
+  void setDoorPosition_cb(unsigned int _position, unsigned int _requested);
 
 protected:
   virtual void setup() override;
@@ -29,25 +29,26 @@ protected:
 private:
 /*
  * Door travel: 86.5" or 2198 mm
- * Mount point: 13" or 330 mm
- * maximum range: 2528 mm
+ * Mount point: 13"   or  330 mm
+ * maximum range:        2528 mm
 */
 #define MM_MIN 330
 #define MM_MAX 2528
 
-  volatile bool vbOne=false;
+  volatile bool vbOne=false;  // guard-flag to initialze machines only once; Homie setup() seems to be called multiple times
 
   const char *cCaption = "• Garage Door Automaton Module:";
   const char *cIndent = " ✖  ";
-  const char *cSknDoorID = "State";
-  const char *cSknPosID = "Position";
+  const char *cSknDoorID = "State";           // Door Positon Label; UP, DOWN, STOPPED,...
+  const char *cSknPosID = "Position";         // Range 0 to 100; current position of door
+  const char *cSknRestartID = "Reboot";       // service commander to force reboot of node
   
-  const char *cSknDoorState = "Down";
-  int iDoorPosition = 100;
-  int dataReadyPin = 13;
+  const char *cDoorState = "Down";            // current door state/label
+  int iDoorPosition = 100;                    // current door position; initially assumes door is down 
+  int dataReadyPin = 13;                      // pin that controls relay; HIGH is active
 
-  void enableAutomatons();
-  void printCaption();
+  void enableAutomatons();                    // Initiales machines and inter-machine communications
+  void printCaption();                        // utility
 
   SknLoxRanger& ranger;  // door position vl53l1x measurement
   SknAtmDoor& door;      // main door logic and relay

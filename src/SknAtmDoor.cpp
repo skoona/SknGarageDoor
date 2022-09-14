@@ -19,6 +19,7 @@ SknAtmDoor& SknAtmDoor::begin()
 {
      // clang-format off
     const static state_t state_table[] PROGMEM = {
+        /* [-- STATES --]   [------- Actions/External Outputs ----------]  [------------------------- Event/External Inputs -----------------------------]   
         /*                             ON_ENTER       ON_LOOP    ON_EXIT      EVT_DOWN      EVT_STOP        EVT_UP       EVT_POS  EVT_POS_REACHED  ELSE */
         /*     STOPPED */           ENT_STOPPED,           -1,        -1,  MOVING_DOWN,           -1,    MOVING_UP,   MOVING_POS,              -1,   -1,
         /*   MOVING_UP */         ENT_MOVING_UP,       LP_POS,        -1,  MOVING_DOWN,      STOPPED,           -1,           -1,              UP,   -1,
@@ -79,15 +80,27 @@ void SknAtmDoor::doorChangeDirection() {
 
 /* Add C++ code for each internally handled event (input)
  * The code must return 1 to trigger the event
- * EVT_CMD_DOWN, EVT_CMD_STOP, EVT_CMD_UP, EVT_POS_REACHED, ELSE
+ * -- ignore incoming event if we are already there
  */
 int SknAtmDoor::event(int id) {
     switch (id)
     {        
     case EVT_DOWN: // dn=100      pos=50
+        if((uiEstimatedPosition != 100) && (id == next_trigger)) {
+            return true;
+        }
+        break;
     case EVT_STOP:
     case EVT_UP:   // up=0        pos=50
+        if((uiEstimatedPosition != 0) && (id == next_trigger)) {
+            return true;
+        }
+        break;
     case EVT_POS:   // up=0        pos=50
+        if((uiEstimatedPosition != uiRequestedPosition) && (id == next_trigger)) {
+            return true;
+        }
+        break;
     case EVT_POS_REACHED:
          return (id == next_trigger);
     }
@@ -115,42 +128,49 @@ void SknAtmDoor::action(int id)
         doorHalt();
         // uiEstimatedPosition = uiRequestedPosition;
         bChangeDirectionEnabled=false;
-        push(connectors, ON_POS, 0, uiEstimatedPosition, 0);
+        push(connectors, ON_POS, 0, uiEstimatedPosition, uiRequestedPosition);        
         push(connectors, ON_CHANGE, 0, state(), 0);
         break;
     case ENT_MOVING_UP:
         doorMove();
         push(connectors, ON_CHANGE, 0, state(), 0);
-        if (uiEstimatedPosition % 2 == 0)
-            push(connectors, ON_POS, 0, uiEstimatedPosition, 0);
+        if (uiEstimatedPosition % 2 == 0) {
+            push(connectors, ON_POS, 0, uiEstimatedPosition, uiRequestedPosition);        
+        }
         break;
     case ENT_UP:
         doorHalt();
         push(connectors, ON_CHANGE, 0, state(), 0);
+        push(connectors, ON_POS, 0, uiEstimatedPosition, uiRequestedPosition);        
         break;
     case ENT_MOVING_DOWN:
         doorMove();
         push(connectors, ON_CHANGE, 0, state(), 0);
-        if (uiEstimatedPosition % 2 == 0)
-            push(connectors, ON_POS, 0, uiEstimatedPosition, 0);
+        if (uiEstimatedPosition % 2 == 0) {
+            push(connectors, ON_POS, 0, uiEstimatedPosition, uiRequestedPosition);        
+        }
         break;
     case ENT_DOWN:
         doorHalt();
         push(connectors, ON_CHANGE, 0, state(), 0);
+        push(connectors, ON_POS, 0, uiEstimatedPosition, uiRequestedPosition);        
         break;
     case ENT_POS:
         doorMove();
         push(connectors, ON_CHANGE, 0, state(), 0);
+        if (uiEstimatedPosition % 2 == 0) {
+            push(connectors, ON_POS, 0, uiEstimatedPosition, uiRequestedPosition);        
+        }
         break;
     case LP_POS:
         if (uiLastEstimatedPosition != uiEstimatedPosition) {
             uiLastEstimatedPosition = uiEstimatedPosition;
-            push(connectors, ON_POS, 0, uiEstimatedPosition, 0);
+            push(connectors, ON_POS, 0, uiEstimatedPosition, uiRequestedPosition);
          }
          // match within 1
         if((uiRequestedPosition==uiEstimatedPosition) || (abs(uiRequestedPosition-uiEstimatedPosition)<=1)) {
             trigger(EVT_POS_REACHED);
-            push(connectors, ON_POS, 0, uiEstimatedPosition, 0);
+            push(connectors, ON_POS, 0, uiEstimatedPosition, uiRequestedPosition);
         }
         // Serial.printf("^ SknAtmDoor::Action() ep=%d, rp=%d, eReq:%s, state:%s\n", uiEstimatedPosition, uiRequestedPosition, mapstate(eRequestedDirection), mapstate(state()));
         break;
@@ -219,7 +239,7 @@ SknAtmDoor& SknAtmDoor::cmd_up() {
 	return *this;
 }
 
-SknAtmDoor& SknAtmDoor::setDoorPosition(uint8_t currentPosition) {
+SknAtmDoor& SknAtmDoor::setDoorPosition_cb(uint8_t currentPosition) {
     uiEstimatedPosition = currentPosition;
     iSampleCount++;
     int eDir=STOPPED;
