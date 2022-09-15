@@ -272,7 +272,7 @@ SknAtmDoor& SknAtmDoor::setDoorPosition_cb(uint8_t currentPosition) {
         if( current==STOPPED ) {                                                       // ranger still running if door is stopped 
             iChangeDirectionCounter++;
 
-        } else if(eDir==STOPPED && bChangeDirectionEnabled) {
+        } else if(eDir==STOPPED && bChangeDirectionEnabled) {  // door stalled during move_pos
             iChangeDirectionCounter++;
         
         } else if( eRequestedDirection==MOVING_POS && eExpectedPosDirection!=eDir ) {  // moving_pos expected not matching actual direction
