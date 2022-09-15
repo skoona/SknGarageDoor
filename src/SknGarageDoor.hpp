@@ -19,6 +19,7 @@ public:
   SknGarageDoor(const char *id, const char *name, const char *cType, int rangerReadyPin, SknAtmDigital& irqObj, SknLoxRanger& rangerObj, SknAtmDoor& doorObj);
   void setDoorState_cb(char *_state);
   void setDoorPosition_cb(unsigned int _position, unsigned int _requested);
+  void updateDoorInfo();
 
 protected:
   virtual void setup() override;
@@ -35,7 +36,7 @@ private:
 #define MM_MIN 330
 #define MM_MAX 2528
 
-  volatile bool vbOne=false;  // guard-flag to initialze machines only once; Homie setup() seems to be called multiple times
+  volatile bool vbOne=false;  // guard-flag to initialze machines only once; Homie setup/onReadyToOperate() seems to be called multiple times
 
   const char *cCaption = "• Garage Door Automaton Module:";
   const char *cIndent = " ✖  ";

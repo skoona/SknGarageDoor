@@ -141,6 +141,7 @@ void SknAtmDoor::action(int id)
         break;
     case ENT_UP:
         doorHalt();
+        uiEstimatedPosition=0;
         push(connectors, ON_CHANGE, 0, state(), 0);
         push(connectors, ON_POS, 0, uiEstimatedPosition, uiRequestedPosition);        
         break;
@@ -153,6 +154,7 @@ void SknAtmDoor::action(int id)
         break;
     case ENT_DOWN:
         doorHalt();
+        uiEstimatedPosition=100;
         push(connectors, ON_CHANGE, 0, state(), 0);
         push(connectors, ON_POS, 0, uiEstimatedPosition, uiRequestedPosition);        
         break;
@@ -286,9 +288,9 @@ SknAtmDoor& SknAtmDoor::setDoorPosition_cb(uint8_t currentPosition) {
             iChangeDirectionCounter=0;
         }
 
-        // handle halting door if it hass been stationary too long
+        // handle halting ranger if door has been stationary too long
         if(iChangeDirectionCounter>=( 2 * MAX_SAMPLES) ) { // must be 2x in a row
-            doorHalt();            // door has been stationary
+            doorHalt();            // turn off ranger
             iChangeDirectionCounter=0;
         }
 

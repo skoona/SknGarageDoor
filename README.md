@@ -1,6 +1,31 @@
 # SknGarageDoor
 Homie Node developed using Automaton State Machines and VL53L1x
 
+## Garage Door Travel
+    * Door travel: 86.5" or 2198 mm
+    * Mount point: 13"   or  330 mm
+    * maximum range:        2528 mm
+
+## Wiring Pin
+    Module
+        ESP8266EX 
+
+    VL53L1x (5VDC)
+        13 DataReady 
+        5 SCL
+        4 SDA
+    
+    Relay (5VDC)
+       12 Activate-HIGH
+
+## Features
+    * Homie v3.01 Base
+    * Samples Door travel every second
+    * Move POS     dd, to a specific Position within 1 mm
+    * Move UP     0%
+    * Move Down 100%
+    * Stop
+
 
 ## OpenHab3 Console Log
 

@@ -4,6 +4,8 @@
  */
 #include "SknGarageDoor.hpp"
 
+extern volatile bool gbEnableDoorOperations;  // value managed by HomieEvent hook
+
 SknGarageDoor::SknGarageDoor(const char *id, const char *name, const char *cType, int rangerReadyPin, SknAtmDigital& irqObj, SknLoxRanger& rangerObj, SknAtmDoor& doorObj) 
     : HomieNode(id, name, cType),
     dataReadyPin(rangerReadyPin),
@@ -19,6 +21,16 @@ SknGarageDoor::SknGarageDoor(const char *id, const char *name, const char *cType
  */
 void SknGarageDoor::printCaption() {
   Homie.getLogger() << cCaption << " " << getId() << endl;
+}
+
+/**
+ *
+ */
+void SknGarageDoor::updateDoorInfo() {
+  if(gbEnableDoorOperations) {
+    setProperty(cSknDoorID).send(cDoorState);
+    setProperty(cSknPosID).send(String(iDoorPosition));
+  }
 }
 
 /**
@@ -58,6 +70,7 @@ bool SknGarageDoor::handleInput(const HomieRange& range, const String& property,
     // Restart this node
   } else if(property.equalsIgnoreCase(cSknRestartID) && value.equalsIgnoreCase("now")) {
     Homie.getLogger() << cIndent << "〽 RESTARTING OR REBOOTING MACHINE ";
+    setProperty(cSknRestartID).send("Rebooting in 5 seconds");
     ESP.restart();
     rc = true;
   }
@@ -65,11 +78,13 @@ bool SknGarageDoor::handleInput(const HomieRange& range, const String& property,
   return rc;
 }
 
+
 /**
  *
  */
 void SknGarageDoor::onReadyToOperate() {
-  door.cycle(512);
+  enableAutomatons();
+
   Homie.getLogger()
       << "〽 "
       << "Node: " << getName()
@@ -79,9 +94,7 @@ void SknGarageDoor::onReadyToOperate() {
       << iDoorPosition
       << ")"
       << endl;
-
-  setProperty(cSknDoorID).send(cDoorState);
-  setProperty(cSknPosID).send(String(iDoorPosition));
+  updateDoorInfo();
 }
 
 /**
@@ -89,25 +102,14 @@ void SknGarageDoor::onReadyToOperate() {
  */
 void SknGarageDoor::setDoorState_cb(char *_state) {
   cDoorState = _state;
-  // Homie.getLogger()
-  //     << "〽 "
-  //     << "Node: " << getName()
-  //     << " Door State " << cSknDoorState
-  //     << endl;  
-  setProperty(cSknDoorID).send(cDoorState);
+  updateDoorInfo();
 }
 /**
  *
  */
 void SknGarageDoor::setDoorPosition_cb(unsigned int _position, unsigned int _requested) {
   iDoorPosition = (int)_position;
-  // Homie.getLogger()
-  //     << "〽 "
-  //     << "Node: " << getName()
-  //     << " DOOR    ACTUAL " << iDoorPosition
-  //     << " DOOR REQUESTED " << _requested
-  //     << endl;
-  setProperty(cSknPosID).send(String(iDoorPosition));
+  updateDoorInfo();
 }
 
 /**
@@ -118,7 +120,7 @@ void SknGarageDoor::enableAutomatons() {
   if(!vbOne) {
     vbOne=true;
 
-    ranger.begin( 1024);       // vl53l1x line of sight distance measurement
+    ranger.begin( 1024);       // vl53l1x Time of Flight distance measurement
 
     irq.begin(dataReadyPin, 30, true, true) // ranger interrupt pin when data ready
 	    .onChange(HIGH, [this]( int idx, int v, int up ) { 
@@ -137,13 +139,12 @@ void SknGarageDoor::enableAutomatons() {
       },0);
 
     ranger.start(); // collect 5ish positions on init
-    irq.cycle(3428); // load Rangers average counter
-    ranger.stop();
-    
-    setProperty(cSknPosID).send(String(iDoorPosition));
-    setProperty(cSknDoorID).send(cDoorState);
+      irq.cycle(5000); // load Rangers average counter
+      door.cycle(512); // let door process one or two positions
+    ranger.stop();   
   }
 }
+
 /**
  *
  */
@@ -170,12 +171,10 @@ void SknGarageDoor::setup() {
     .settable();
     // Commands: now
 
-  enableAutomatons();
-
   Homie.getLogger()
       << "〽 "
       << "Node: " << getName()
-      << " SknGarageDoor::setup() " << vbOne
+      << " SknGarageDoor::setup() "
       << endl;
 }
 
@@ -183,7 +182,7 @@ void SknGarageDoor::setup() {
  *
  */
 void SknGarageDoor::loop() {
-  if(vbOne) {
+  if(vbOne && gbEnableDoorOperations) {
     automaton.run();
   }
 }

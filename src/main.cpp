@@ -92,6 +92,9 @@ extern "C"
   #define LED_BUILTIN 4
 #endif
 
+volatile bool gbEnableDoorOperations=false; // guard-flag to prevent sending properties when mqtt is offline
+
+
 SknAtmDigital irq;                   // handles data ready interrupt for ranger
 SknLoxRanger ranger;                 // measures distance of door
 SknAtmDoor door(RELAY_GPIO, ranger); // controls door relay and startng stopping of ranger
@@ -99,6 +102,26 @@ SknAtmDoor door(RELAY_GPIO, ranger); // controls door relay and startng stopping
 /* Homie Nodes 
 */
 SknGarageDoor doorNode(SKN_ID, SKN_TITLE, SKN_TYPE, LOX_GPIO, irq, ranger, door); // communication interface
+
+/**
+ *
+ */
+void onHomieEvent(const HomieEvent& event) {
+  switch (event.type) {
+    case HomieEventType::MQTT_READY:
+      Serial << "MQTT connected" << endl;
+      gbEnableDoorOperations=true;
+      break;
+    case HomieEventType::MQTT_DISCONNECTED:
+      Serial << "MQTT disconnected, reason: " << (int8_t)event.mqttReason << endl;
+      gbEnableDoorOperations=false;
+      break;
+    case HomieEventType::SENDING_STATISTICS:
+      Serial << "Sending statistics" << endl;
+      doorNode.updateDoorInfo();
+      break;
+  }
+}
 
 /*
  * Callback for Homie Broadcasts
@@ -125,10 +148,10 @@ void setup()
 
   Homie_setFirmware(SKN_MOD_NAME, SKN_MOD_VERSION);
   Homie_setBrand(SKN_MOD_BRAND);
-
   Homie.setBroadcastHandler(broadcastHandler)
       .setLedPin(LED_BUILTIN, LOW)
-      .disableResetTrigger();
+      .disableResetTrigger()
+      .onEvent(onHomieEvent);
 
   Homie.setup();
 }

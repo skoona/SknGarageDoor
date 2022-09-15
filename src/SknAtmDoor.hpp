@@ -74,6 +74,6 @@ private:
     unsigned int iaDirection[MAX_SAMPLES+3]; // used to determine current direction based on last x values a[first] > a[last]
 
 
-    SknLoxRanger& ranger;                   // external line of sight distance measuring device VL53L1x
+    SknLoxRanger& ranger;                   // external time of flight distance measuring device VL53L1x
 };
 
