@@ -4,15 +4,17 @@
  */
 #include "SknGarageDoor.hpp"
 
-extern volatile bool gbEnableDoorOperations;  // value managed by HomieEvent hook
-
-SknGarageDoor::SknGarageDoor(const char *id, const char *name, const char *cType, int rangerReadyPin, SknAtmDigital& irqObj, SknLoxRanger& rangerObj, SknAtmDoor& doorObj) 
+SknGarageDoor::SknGarageDoor(const char *id, const char *name, const char *cType, int rangerReadyPin, int relayPin) 
     : HomieNode(id, name, cType),
     dataReadyPin(rangerReadyPin),
-    ranger(rangerObj),
-    door(doorObj),
-    irq(irqObj)
+    irq(),
+    ranger(),
+    door(relayPin, ranger)
 {
+  //  dataReadyPin=rangerReadyPin;
+  //  irq    = SknAtmDigital();                   // handles data ready interrupt for ranger
+  //  ranger = SknLoxRanger();                    // measures distance of door
+  //  door   = SknAtmDoor(relayPin, *ranger);     // controls door relay and startng stopping of ranger
    printCaption();
 }
 

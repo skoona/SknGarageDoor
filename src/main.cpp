@@ -94,14 +94,10 @@ extern "C"
 
 volatile bool gbEnableDoorOperations=false; // guard-flag to prevent sending properties when mqtt is offline
 
-
-SknAtmDigital irq;                   // handles data ready interrupt for ranger
-SknLoxRanger ranger;                 // measures distance of door
-SknAtmDoor door(RELAY_GPIO, ranger); // controls door relay and startng stopping of ranger
-
 /* Homie Nodes 
 */
-SknGarageDoor doorNode(SKN_ID, SKN_TITLE, SKN_TYPE, LOX_GPIO, irq, ranger, door); // communication interface
+// SknGarageDoor doorNode(SKN_ID, SKN_TITLE, SKN_TYPE, LOX_GPIO, irq, ranger, door); // communication interface
+SknGarageDoor doorNode(SKN_ID, SKN_TITLE, SKN_TYPE, LOX_GPIO, RELAY_GPIO); // communication interface
 
 /**
  *

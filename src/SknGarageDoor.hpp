@@ -5,6 +5,10 @@
 
 #pragma once
 
+
+extern volatile bool gbEnableDoorOperations;  // value managed by HomieEvent hook
+
+
 #include <Automaton.h>
 #include <Homie.hpp>
 #include <Wire.h>
@@ -16,7 +20,7 @@ class SknGarageDoor : public HomieNode {
 
 public:
  
-  SknGarageDoor(const char *id, const char *name, const char *cType, int rangerReadyPin, SknAtmDigital& irqObj, SknLoxRanger& rangerObj, SknAtmDoor& doorObj);
+  SknGarageDoor(const char *id, const char *name, const char *cType, int rangerReadyPin, int relayPin);
   void setDoorState_cb(char *_state);
   void setDoorPosition_cb(unsigned int _position, unsigned int _requested);
   void updateDoorInfo();
@@ -51,7 +55,7 @@ private:
   void enableAutomatons();                    // Initiales machines and inter-machine communications
   void printCaption();                        // utility
 
-  SknLoxRanger& ranger;  // door position vl53l1x measurement
-  SknAtmDoor& door;      // main door logic and relay
-  SknAtmDigital& irq;      // Ranger Position Automaton object
+  SknLoxRanger  ranger;  // door position vl53l1x measurement
+  SknAtmDoor    door;      // main door logic and relay
+  SknAtmDigital irq;      // Ranger Position Automaton object
 };
