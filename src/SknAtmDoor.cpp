@@ -19,7 +19,7 @@ SknAtmDoor& SknAtmDoor::begin()
 {
      // clang-format off
     const static state_t state_table[] PROGMEM = {
-        /* [-- STATES --]   [------- Actions/External Outputs ----------]  [------------------------- Event/External Inputs -----------------------------]   
+        /* [-- STATES --]   [------- Actions/External Outputs ----------]  [------------------------- Event/External Inputs --------------------------] */
         /*                             ON_ENTER       ON_LOOP    ON_EXIT      EVT_DOWN      EVT_STOP        EVT_UP       EVT_POS  EVT_POS_REACHED  ELSE */
         /*     STOPPED */           ENT_STOPPED,           -1,        -1,  MOVING_DOWN,           -1,    MOVING_UP,   MOVING_POS,              -1,   -1,
         /*   MOVING_UP */         ENT_MOVING_UP,       LP_POS,        -1,  MOVING_DOWN,      STOPPED,           -1,           -1,              UP,   -1,
@@ -56,7 +56,7 @@ SknAtmDoor& SknAtmDoor::relayStop() {
 }
 SknAtmDoor& SknAtmDoor::relayChangeDirection() {
     relayStop().relayPause(10).relayStart();    
-    Serial.printf("^ SknAtmDoor::relayChangeDirection() ep=%d, rp=%d, eReq:%s, state:%s\n", uiEstimatedPosition, uiRequestedPosition, mapstate(eRequestedDirection), mapstate(state()));
+    Serial.printf("✖✖✖ SknAtmDoor::relayChangeDirection() ep=%d, rp=%d, ePos:%s, eReq:%s, curr:%s\n", uiEstimatedPosition, uiRequestedPosition, mapstate(eExpectedPosDirection), mapstate(eRequestedDirection), mapstate(current));
     return *this;    
 }
 
@@ -128,6 +128,7 @@ void SknAtmDoor::action(int id)
         doorHalt();
         // uiEstimatedPosition = uiRequestedPosition;
         bChangeDirectionEnabled=false;
+        eExpectedPosDirection=STOPPED;
         push(connectors, ON_POS, 0, uiEstimatedPosition, uiRequestedPosition);        
         push(connectors, ON_CHANGE, 0, state(), 0);
         break;
@@ -209,9 +210,11 @@ SknAtmDoor& SknAtmDoor::cmd_pos(uint8_t destPos) {
     if (destPos != uiEstimatedPosition) {
         eRequestedDirection = MOVING_POS;
         bChangeDirectionEnabled=true;
+        eExpectedPosDirection = (destPos > uiEstimatedPosition ? MOVING_DOWN : MOVING_UP);
         trigger(EVT_POS);
     } else if (destPos == uiEstimatedPosition) {
         eRequestedDirection = STOPPED;
+        eExpectedPosDirection = STOPPED;
         bChangeDirectionEnabled=false;
         trigger(EVT_STOP);
     }
@@ -260,21 +263,40 @@ SknAtmDoor& SknAtmDoor::setDoorPosition_cb(uint8_t currentPosition) {
         if (iaDirection[0]  <  iaDirection[iSamples]) { eDir=MOVING_DOWN; }
         if (iaDirection[0]  == iaDirection[iSamples]) { eDir=STOPPED; }
 
-        if ((eRequestedDirection!=eDir) && (eRequestedDirection!=current) && (current!=STOPPED)) {
+        /*
+         * If MOVING_POS allow change direction of door to reach positoning goal
+         * - eExpectedPosDirection is MOVING_UP or MOVING_DOWN based on cmd_pos() bChangeDirectionEnabled decision of request
+         * - Require off state to occur 5 times before executing change of direction
+         * if door has been stopped too long and ranger is still running, turn off (halt) ranger
+        */
+        if( current==STOPPED ) {                                                       // ranger still running if door is stopped 
             iChangeDirectionCounter++;
+
+        } else if(eDir==STOPPED && bChangeDirectionEnabled) {
+            iChangeDirectionCounter++;
+        
+        } else if( eRequestedDirection==MOVING_POS && eExpectedPosDirection!=eDir ) {  // moving_pos expected not matching actual direction
+            iChangeDirectionCounter++;
+        
         } else iChangeDirectionCounter--;
 
+        // handle change direction if moving_pos
         if(iChangeDirectionCounter>=MAX_SAMPLES && bChangeDirectionEnabled) { // must be x in a row
-            doorChangeDirection();
+            doorChangeDirection(); // door moving in wrong directions
             iChangeDirectionCounter=0;
         }
 
-        Serial.printf("SknAtmDoor::setDoorPosition(%d:%d) Position:%d, Moving:%s, sReq:%s, sCur:%s, sNext:%s, chgDir:%s, A:%d, B:%d\n", 
-            iSampleCount, iChangeDirectionCounter, currentPosition, mapstate(eDir), 
+        // handle halting door if it hass been stationary too long
+        if(iChangeDirectionCounter>=( 2 * MAX_SAMPLES) ) { // must be 2x in a row
+            doorHalt();            // door has been stationary
+            iChangeDirectionCounter=0;
+        }
+
+        Serial.printf("SknAtmDoor::setDoorPosition(%d:%d) Position:%d, Moving:%s, ePos:%s, sReq:%s, sCur:%s, sNext:%s, chgDir:%s, A:%d, B:%d\n", 
+            iSampleCount, iChangeDirectionCounter, currentPosition, mapstate(eDir), mapstate(eExpectedPosDirection), 
             mapstate(eRequestedDirection), mapstate(current),  mapstate(next), 
             (bChangeDirectionEnabled ? "True" : "False"), iaDirection[0], iaDirection[iSamples]);
     }
-
 
     return *this;
 }

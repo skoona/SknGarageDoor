@@ -25,7 +25,7 @@ public:
 
 protected:
   unsigned int uiDistanceValue = 0;
-  unsigned int uiIinterMeasurementDuration;
+  unsigned int uiInterMeasurementDuration;
   
 private :   
   #define MAX_SAMPLES 5

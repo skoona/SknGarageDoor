@@ -69,6 +69,7 @@ private:
     int iChangeDirectionCounter=0;         // counter to enure change direction flag has happened x time in a row
     int iSamples = 0;                      // sample counter used by setDoorPosition
     int iSampleCount = 0;                  // number of position samples received
+    int eExpectedPosDirection = STOPPED;   // Expected Direction of a POS Move
     int eRequestedDirection = STOPPED;     // Requested cmd state by incoming events
     unsigned int iaDirection[MAX_SAMPLES+3]; // used to determine current direction based on last x values a[first] > a[last]
 

@@ -118,11 +118,11 @@ void SknGarageDoor::enableAutomatons() {
   if(!vbOne) {
     vbOne=true;
 
-    ranger.begin( 1000);       // vl53l1x line of sight distance measurement
+    ranger.begin( 1024);       // vl53l1x line of sight distance measurement
 
     irq.begin(dataReadyPin, 30, true, true) // ranger interrupt pin when data ready
 	    .onChange(HIGH, [this]( int idx, int v, int up ) { 
-        long posValue =constrain( map((long)ranger.readValues(false), MM_MIN, MM_MAX, 0, 100), 0, 100);
+        long posValue =constrain( map((long)ranger.readValues(true), MM_MIN, MM_MAX, 0, 100), 0, 100);
         door.setDoorPosition_cb( posValue );
         iDoorPosition = posValue; // save local value
       }, 0);
@@ -137,7 +137,7 @@ void SknGarageDoor::enableAutomatons() {
       },0);
 
     ranger.start(); // collect 5ish positions on init
-    irq.cycle(2048); // load Rangers average counter
+    irq.cycle(3428); // load Rangers average counter
     ranger.stop();
     
     setProperty(cSknPosID).send(String(iDoorPosition));

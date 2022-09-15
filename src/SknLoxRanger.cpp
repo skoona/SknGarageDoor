@@ -16,7 +16,9 @@ SknLoxRanger::SknLoxRanger( ) {
 SknLoxRanger& SknLoxRanger::begin( unsigned int interMeasurementDurationMS=1000 ) {
   unsigned long int time_now = millis();
 
-  uiIinterMeasurementDuration=interMeasurementDurationMS;
+  uiInterMeasurementDuration=interMeasurementDurationMS;
+
+  lox.setTimeout(512);
 
   if (!lox.init())
   {
@@ -34,8 +36,8 @@ SknLoxRanger& SknLoxRanger::begin( unsigned int interMeasurementDurationMS=1000 
     Serial.printf(" ✖  Exited initialize sensor!\n");
   }
 
-  lox.setTimeout(500);
- 
+  lox.setTimeout(512);
+
   if (lox.setDistanceMode(VL53L1X::Medium))
   {
     Serial.printf("〽 Medium distance mode accepted.\n");
@@ -57,7 +59,7 @@ SknLoxRanger& SknLoxRanger::begin( unsigned int interMeasurementDurationMS=1000 
  *  // 250ms read + 250ms wait = cycle time
  */
 SknLoxRanger&  SknLoxRanger::start() {
-  lox.startContinuous(uiIinterMeasurementDuration);
+  lox.startContinuous(uiInterMeasurementDuration);
   return *this;
 }
 
