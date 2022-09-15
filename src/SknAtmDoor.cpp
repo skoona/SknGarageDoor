@@ -141,7 +141,6 @@ void SknAtmDoor::action(int id)
         break;
     case ENT_UP:
         doorHalt();
-        uiEstimatedPosition=0;
         push(connectors, ON_CHANGE, 0, state(), 0);
         push(connectors, ON_POS, 0, uiEstimatedPosition, uiRequestedPosition);        
         break;
@@ -154,7 +153,6 @@ void SknAtmDoor::action(int id)
         break;
     case ENT_DOWN:
         doorHalt();
-        uiEstimatedPosition=100;
         push(connectors, ON_CHANGE, 0, state(), 0);
         push(connectors, ON_POS, 0, uiEstimatedPosition, uiRequestedPosition);        
         break;
