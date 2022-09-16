@@ -22,12 +22,12 @@ Homie ESP8266 Node developed using Automaton State Machines and VL53L1x
 * [Homie ESP8266/32 v3](https://github.com/homieiot/homie-esp8266)
 * [Automaton Reactive State Machine)](https://github.com/tinkerspy/Automaton)
 
-## Garage Door Travel
-    * Full travel:        86.5" or 2198 mm
-    * Device mount point: 13.0" or  330 mm
-    * Maximum range:               2528 mm
+### Garage Door Travel
+* Full travel:        86.5" or 2198 mm
+* Device mount point: 13.0" or  330 mm
+* Maximum range:               2528 mm
 
-## Wiring Pin
+### Wiring Pin
     Module
         ESP8266EX 
 
@@ -66,7 +66,7 @@ Homie ESP8266 Node developed using Automaton State Machines and VL53L1x
 }
 ```
 
-## OpenHab3 Console Log
+### OpenHab3 Console Log
 
     2022-09-14 20:57:09.780 [INFO ] [openhab.event.ItemCommandEvent      ] - Item 'GarageDoor_Position' received command UP
     2022-09-14 20:57:09.788 [INFO ] [penhab.event.ItemStatePredictedEvent] - Item 'GarageDoor_Position' predicted to become UP
@@ -75,7 +75,7 @@ Homie ESP8266 Node developed using Automaton State Machines and VL53L1x
     2022-09-14 20:57:13.886 [INFO ] [openhab.event.ItemStateChangedEvent ] - Item 'GarageDoor_Position' changed from 0 to 100
     2022-09-14 20:57:17.836 [INFO ] [openhab.event.ItemCommandEvent      ] - Item 'GarageDoor_Position' received command STOP
 
-## ESP8266 Console Log
+### ESP8266 Console Log
 
     21:01:59.886 > 74624596 Switch DOOR@3FFEEDA8 from STOPPED to MOVING_UP on EVT_UP (221812990 cycles in 9510428 ms)
     21:02:00.315 > 〽 range: 1725 mm avgerage: 1361 mm,     status: range valid     raw: 0  signal: 3.1 MCPS        ambient: 0.2 MCPS
