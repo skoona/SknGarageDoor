@@ -98,16 +98,19 @@ extern "C"
   #define LED_BUILTIN 4    // d1_mini GPIO2
 #endif
 
-volatile bool gbEnableDoorOperations=false; // guard-flag to prevent sending properties when mqtt is offline
-
-/* Homie Nodes 
+ /* *
+  *
+  * guard-flag to prevent sending properties when mqtt is offline
+  * 
 */
-// SknGarageDoor doorNode(SKN_ID, SKN_TITLE, SKN_TYPE, LOX_GPIO, irq, ranger, door); // communication interface
+volatile bool gbEnableDoorOperations=false;
+
+/* 
+ * Homie Nodes */
 SknGarageDoor doorNode(SKN_ID, SKN_TITLE, SKN_TYPE, LOX_GPIO, RELAY_GPIO); // communication interface
 
 /**
- *
- */
+ * look for events that block sending property info */
 void onHomieEvent(const HomieEvent& event) {
   switch (event.type) {
     case HomieEventType::MQTT_READY:
@@ -126,8 +129,7 @@ void onHomieEvent(const HomieEvent& event) {
 }
 
 /*
- * Callback for Homie Broadcasts
-*/
+ * Callback for Homie Broadcasts */
 bool broadcastHandler(const String &level, const String &value)
 {
   Homie.getLogger() << "Received broadcast level " << level << ": " << value << endl;
@@ -135,8 +137,7 @@ bool broadcastHandler(const String &level, const String &value)
 }
 
 /*
- * Arduino Setup: Initialze Homie
-*/
+ * Arduino Setup: Initialze Homie */
 void setup()
 {
   delay(200);
@@ -150,6 +151,7 @@ void setup()
 
   Homie_setFirmware(SKN_MOD_NAME, SKN_MOD_VERSION);
   Homie_setBrand(SKN_MOD_BRAND);
+  
   Homie.setBroadcastHandler(broadcastHandler)
       .setLedPin(LED_BUILTIN, LOW)
       .disableResetTrigger()
@@ -159,8 +161,7 @@ void setup()
 }
 
 /*
- * Arduino Loop: Cycles Homie Nodes
-*/
+ * Arduino Loop: Cycles Homie Nodes */
 void loop()
 {
   Homie.loop();
