@@ -18,9 +18,9 @@ Homie ESP8266 Node developed using Automaton State Machines and VL53L1x
 * [5v Relay Board Relay Module 1 Channel Opto-Isolated High or Low Level Trigger](https://www.amazon.com/AOICRIE-Optocoupler-Isolation-Compatible-Development/dp/B08C71QL65/ref=sr_1_6?crid=3GQ5B5O0AT995&keywords=HiLetgo+2pcs+5V+One+Channel+Relay+Module+Relay+Switch+with+OPTO+Isolation+High+Low+Level+Trigger&qid=1663330959&s=electronics&sprefix=hiletgo+2pcs+5v+one+channel+relay+module+relay+switch+with+opto+isolation+high+low+level+trigger%2Celectronics%2C109&sr=1-6)
 
 ### Frameworks: Arduino, Homie V3, Automaton State Machine
-* ![PlatformIO(Arduino)](https://platformio.org)
-* ![Homie ESP8266/32 v3](https://github.com/homieiot/homie-esp8266)
-* ![Automation Reactive State Machine)](https://github.com/tinkerspy/Automaton)
+* [PlatformIO(Arduino)](https://platformio.org)
+* [Homie ESP8266/32 v3](https://github.com/homieiot/homie-esp8266)
+* [Automation Reactive State Machine)](https://github.com/tinkerspy/Automaton)
 
 ## Garage Door Travel
     * Door travel: 86.5" or 2198 mm
