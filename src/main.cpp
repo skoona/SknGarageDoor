@@ -66,8 +66,6 @@ Note:
 #include <Homie.hpp>
 #include <Wire.h>
 #include "SknGarageDoor.hpp"
-#include "SknAtmDoor.hpp"
-#include "SknAtmDigital.hpp"
 
 extern "C"
 {
@@ -82,14 +80,22 @@ extern "C"
 #define SKN_TYPE "Rollershutter"
 #define SKN_ID "SknGarageDoor"
 
-// Pins
-#define SDA 5
-#define SCL 4
-#define LOX_GPIO   13
-#define RELAY_GPIO 12
+// D1_mini Pins
+#ifdef ARDUINO_ESP8266_WEMOS_D1MINI
+  #define SDA 4        // D2
+  #define SCL 5        // D1
+#elif ARDUINO_ESP8266_ESP12
+// Esp8266EX  pins
+  #define SDA 5
+  #define SCL 4
+#endif
+
+
+#define LOX_GPIO   13    // D7
+#define RELAY_GPIO 12    // D6
 
 #ifndef LED_BUILTIN
-  #define LED_BUILTIN 4
+  #define LED_BUILTIN 4    // d1_mini GPIO2
 #endif
 
 volatile bool gbEnableDoorOperations=false; // guard-flag to prevent sending properties when mqtt is offline

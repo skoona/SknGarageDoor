@@ -7,9 +7,9 @@
 SknGarageDoor::SknGarageDoor(const char *id, const char *name, const char *cType, int rangerReadyPin, int relayPin) 
     : HomieNode(id, name, cType),
     dataReadyPin(rangerReadyPin),
-    irq(),                  // handles data ready interrupt for ranger
-    ranger(),               // measures distance of door
-    door(relayPin, ranger)  // controls door relay and startng stopping of ranger
+    ranger(),                // measures distance of door
+    door(relayPin, ranger),  // controls door relay and startng stopping of ranger
+    irq()                    // handles data ready interrupt for ranger
 {
    printCaption();
 }
