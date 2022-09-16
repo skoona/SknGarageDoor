@@ -8,7 +8,7 @@ Homie ESP8266 Node developed using Automaton State Machines and VL53L1x
 ## Features
 * OpenHab3 RollerShutter Type
 * Homie/SknGarageDoor/GarageDoor/Position/set 0:100
-* Homie/SknGarageDoor/GarageDoor/State UP,DOWN,STOP
+* Homie/SknGarageDoor/GarageDoor/State UP,DOWN,STOPPED
 * Measures door position in mm, translate to 0:100 range; with 0 considered UP, and 100 Down
 * Operates Door Relay with normal or short click hold times; meant to stop door or run fully.
 
