@@ -20,7 +20,7 @@ Homie ESP8266 Node developed using Automaton State Machines and VL53L1x
 ### Frameworks: 
 * [PlatformIO(Arduino)](https://platformio.org)
 * [Homie ESP8266/32 v3](https://github.com/homieiot/homie-esp8266)
-* [Automation Reactive State Machine)](https://github.com/tinkerspy/Automaton)
+* [Automaton Reactive State Machine)](https://github.com/tinkerspy/Automaton)
 
 ## Garage Door Travel
     * Door travel: 86.5" or 2198 mm
