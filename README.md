@@ -23,9 +23,9 @@ Homie ESP8266 Node developed using Automaton State Machines and VL53L1x
 * [Automaton Reactive State Machine)](https://github.com/tinkerspy/Automaton)
 
 ## Garage Door Travel
-    * Door travel: 86.5" or 2198 mm
-    * Mount point: 13"   or  330 mm
-    * maximum range:        2528 mm
+    * Full travel:        86.5" or 2198 mm
+    * Device mount point: 13.0" or  330 mm
+    * Maximum range:               2528 mm
 
 ## Wiring Pin
     Module
