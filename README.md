@@ -37,7 +37,7 @@ Homie ESP8266 Node developed using Automaton State Machines and VL53L1x
         4 SDA
     
     Relay (5VDC)
-       12 Activate-HIGH
+       12 Activate-HIGH, or pin that is not HIGH on boot
 
 
 ## Homie Config: data/homie/config.json
