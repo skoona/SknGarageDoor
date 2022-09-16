@@ -1,5 +1,9 @@
 # SknGarageDoor
-Homie Node developed using Automaton State Machines and VL53L1x
+Homie ESP8266 Node developed using Automaton State Machines and VL53L1x
+
+<a href="https://homieiot.github.io/">
+  <img src="https://homieiot.github.io/img/works-with-homie.png" alt="works with MQTT Homie">
+</a>
 
 ## Garage Door Travel
     * Door travel: 86.5" or 2198 mm
@@ -19,13 +23,46 @@ Homie Node developed using Automaton State Machines and VL53L1x
        12 Activate-HIGH
 
 ## Features
-    * Homie v3.01 Base
-    * Samples Door travel every second
-    * Move POS     dd, to a specific Position within 1 mm
-    * Move UP     0%
-    * Move Down 100%
-    * Stop
+    * Homie/<devieID>/<NodeID>/Position/set 0:100
+    * Homie/<devieID>/<NodeID>/State UP,DOWN,STOP
+    * Measures door position in mm, translate to 0:100 range; with 0 considered UP, and 100 Down
+    * Operates Door Relay with normal or short click hold times; meant to stop door or run fully.
 
+## Components
+    * ![Wemos D1 Mini ESP8266](https://www.amazon.com/MELIFE-Development-Wireless-Internet-MicroPython/dp/B08H1YRN4M/ref=sr_1_10?crid=2Y9PEH0OFTXPL&keywords=memos+d1+mini+esp8266&qid=1663331796&s=electronics&sprefix=memos+d1+mini+esp8266%2Celectronics%2C84&sr=1-10)
+    * ![VL53L1x Time of Flight Sensor](https://www.amazon.com/DWEII-Measurement-Extension-Compatible-Raspberry/dp/B09V4DS888/ref=sr_1_4_sspa?crid=1SZRJKYL8C1IB&keywords=vl53l1x+tof+sensor+module&qid=1663331559&sprefix=vl53l1%2Caps%2C89&sr=8-4-spons&psc=1)
+    * ![5v Relay Board Relay Module 1 Channel Opto-Isolated High or Low Level Trigger](https://www.amazon.com/AOICRIE-Optocoupler-Isolation-Compatible-Development/dp/B08C71QL65/ref=sr_1_6?crid=3GQ5B5O0AT995&keywords=HiLetgo+2pcs+5V+One+Channel+Relay+Module+Relay+Switch+with+OPTO+Isolation+High+Low+Level+Trigger&qid=1663330959&s=electronics&sprefix=hiletgo+2pcs+5v+one+channel+relay+module+relay+switch+with+opto+isolation+high+low+level+trigger%2Celectronics%2C109&sr=1-6)
+
+### Frameworks: Arduino, Homie V3, Automaton State Machine
+    * ![PlatformIO(Arduino)](https://platformio.org)
+    * ![Homie ESP8266/32 v3](https://github.com/homieiot/homie-esp8266)
+    * ![Automation Reactive State Machine)](https://github.com/tinkerspy/Automaton)
+
+## Homie Config: data/homie/config.json
+```
+{
+  "name": "Garage Door",
+  "device_id": "SknGarageDoor",
+  "device_stats_interval": 900,  
+  "wifi": {
+    "ssid": "<wifi-host>",
+    "password": "<wifi-password>"
+  },
+  "mqtt": {
+    "host": "<mqtt-hostname-or-ip>",
+    "port": 1883,
+	"base_topic": "sknSensors/",
+    "auth": true,
+    "username": "<mqtt-username>",
+    "password": "<mqtt-password>"
+  },
+  "ota": {
+    "enabled": true
+  },
+  "settings": {
+  }
+}
+```
 
 ## OpenHab3 Console Log
 

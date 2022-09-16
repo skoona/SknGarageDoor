@@ -80,12 +80,16 @@ extern "C"
 #define SKN_TYPE "Rollershutter"
 #define SKN_ID "SknGarageDoor"
 
+#if defined(ARDUINO_ESP8266_WEMOS_D1MINI)
 // D1_mini Pins
-#ifdef ARDUINO_ESP8266_WEMOS_D1MINI
   #define SDA 4        // D2
   #define SCL 5        // D1
-#elif ARDUINO_ESP8266_ESP12
+#elif defined(ARDUINO_ESP8266_ESP12)
 // Esp8266EX  pins
+  #define SDA 5
+  #define SCL 4
+#elif defined(ARDUINO_ESP8266_SONOFF_BASIC)
+// SonOff_Basic  pins
   #define SDA 5
   #define SCL 4
 #endif
