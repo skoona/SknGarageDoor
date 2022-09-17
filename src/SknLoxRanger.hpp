@@ -7,10 +7,6 @@
 
 #include <VL53L1X.h>
 
-extern "C"
-{
-#include <user_interface.h>
-}
 
 class SknLoxRanger {
 

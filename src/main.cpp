@@ -67,10 +67,12 @@ Note:
 #include <Wire.h>
 #include "SknGarageDoor.hpp"
 
+#ifndef ARDUINO_ESP32_DEV
 extern "C"
 {
 #include <user_interface.h>
 }
+#endif
 
 #define SKN_MOD_NAME "Garage Door Automation"
 #define SKN_MOD_VERSION "0.0.1"
@@ -84,7 +86,7 @@ extern "C"
 // D1_mini Pins
   #define SDA 4        // D2
   #define SCL 5        // D1
-#elif defined(ARDUINO_ESP8266_ESP12)
+#elif defined(ARDUINO_ESP8266_ESP12) || defined(ARDUINO_ESP8266_SONOFF_BASIC)
 // Esp8266EX  pins
   #define SDA 5
   #define SCL 4
@@ -92,6 +94,11 @@ extern "C"
 // SonOff_Basic  pins
   #define SDA 5
   #define SCL 4
+#elif defined(ARDUINO_ESP32_DEV)
+// esp32doit-devkit-v1  pins
+  #define SDA 21
+  #define SCL 22
+  #define ATM_PLAYER_DISABLE_TONE   // disable some Automaton Ardunio issues (noTone, Tone, AnalogWrite)
 #endif
 
 
@@ -99,7 +106,7 @@ extern "C"
 #define RELAY_GPIO 12    // D6
 
 #ifndef LED_BUILTIN
-  #define LED_BUILTIN 4    // d1_mini GPIO2
+  #define LED_BUILTIN 4    // d1_mini GPIO2, esp32doit-devkit-v1=GPIO2
 #endif
 
  /* *
