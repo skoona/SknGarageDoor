@@ -27,6 +27,8 @@ public:
     SknAtmDoor& onPos(atm_cb_lambda_t callback, int idx = 0);
 
     /* External Action Helpers */
+    SknAtmDoor& cmd_auto_learn_up(void);        // Learn door boundaries
+    SknAtmDoor& cmd_auto_learn_down(void);        // Learn door boundaries
     SknAtmDoor& cmd_down(void);                 // triggers Door MOVING_DOWN event
     SknAtmDoor& cmd_stop(void);                 // triggers Door STOPPED event
     SknAtmDoor& cmd_up(void);                   // triggers Door MOVING_UP event
@@ -37,12 +39,14 @@ public:
     const char * mapstate(int state);
     int state(void);
 
-    enum eStates { STOPPED, MOVING_UP, UP, MOVING_DOWN, DOWN, MOVING_POS }; // STATES
-    enum eEvents { EVT_DOWN, EVT_STOP, EVT_UP, EVT_POS, EVT_POS_REACHED, ELSE }; // EVENTS
+    enum eStates { STOPPED, MOVING_UP, UP, MOVING_DOWN, DOWN, MOVING_POS, LEARN_UP, LEARN_DOWN }; // STATES
+    enum eEvents { EVT_DOWN, EVT_STOP, EVT_UP, EVT_POS, EVT_POS_REACHED, EVT_TIMER, EVT_LEARN_UP, EVT_LEARN_DOWN, ELSE }; // EVENTS
 
 private:
-    enum eActions { ENT_STOPPED, ENT_MOVING_UP, ENT_UP, ENT_MOVING_DOWN, ENT_DOWN, ENT_POS, LP_POS }; // ACTIONS
-    enum eConnectors { ON_CHANGE, ON_POS, CONN_MAX }; // CONNECTORS
+    enum eActions { ENT_STOPPED, ENT_MOVING_UP, ENT_UP, ENT_MOVING_DOWN, ENT_DOWN, ENT_POS, ENT_LEARN, LP_POS, LP_LEARN }; // ACTIONS
+    enum eConnectors { ON_CHANGE, ON_POS, ON_LEARN, CONN_MAX }; // CONNECTORS
+
+    atm_timer_millis autoLearnTime;
 
     /*
      * Implement external effects */
@@ -50,6 +54,7 @@ private:
     SknAtmDoor& relayStart();             // implements normal click (384ms) to start door movement
     SknAtmDoor& relayStop();              // implements quick (64ms) click to stop door
     SknAtmDoor& relayChangeDirection();   // quick to stop door, then normal click to start it
+    void doorStartAutoLearn();            // Enable door range position
     void doorMove();                      // clicks door relay and turns on ranger
     void doorStop();                      // clicks door relay and turns off ranger
     void doorHalt();                      // turn off ranger operations only

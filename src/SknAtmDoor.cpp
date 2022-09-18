@@ -19,17 +19,20 @@ SknAtmDoor& SknAtmDoor::begin()
 {
      // clang-format off
     const static state_t state_table[] PROGMEM = {
-        /* [-- STATES --]   [------- Actions/External Outputs ----------]  [------------------------- Event/External Inputs --------------------------] */
-        /*                             ON_ENTER       ON_LOOP    ON_EXIT      EVT_DOWN      EVT_STOP        EVT_UP       EVT_POS  EVT_POS_REACHED  ELSE */
-        /*     STOPPED */           ENT_STOPPED,           -1,        -1,  MOVING_DOWN,           -1,    MOVING_UP,   MOVING_POS,              -1,   -1,
-        /*   MOVING_UP */         ENT_MOVING_UP,       LP_POS,        -1,  MOVING_DOWN,      STOPPED,           -1,           -1,              UP,   -1,
-        /*          UP */                ENT_UP,           -1,        -1,  MOVING_DOWN,      STOPPED,           -1,   MOVING_POS,              -1,   -1,
-        /* MOVING_DOWN */       ENT_MOVING_DOWN,       LP_POS,        -1,           -1,      STOPPED,    MOVING_UP,           -1,            DOWN,   -1,
-        /*        DOWN */              ENT_DOWN,           -1,        -1,           -1,      STOPPED,    MOVING_UP,   MOVING_POS,              -1,   -1,
-        /*  MOVING_POS */              ENT_POS,        LP_POS,        -1,           -1,      STOPPED,           -1,           -1,         STOPPED,   -1
+        /* [-- STATES --]   [------- Actions/External Outputs ----------]  [-------------------------------------------- Event/External Inputs ---------------------------------------------] */
+        /*                             ON_ENTER       ON_LOOP    ON_EXIT      EVT_DOWN   EVT_STOP       EVT_UP       EVT_POS  EVT_POS_REACHED  EVT_TIMER   EVT_LEARN_UP  EVT_LEARN_DOWN  ELSE */
+        /*     STOPPED */           ENT_STOPPED,           -1,        -1,  MOVING_DOWN,        -1,   MOVING_UP,   MOVING_POS,              -1,        -1,     LEARN_UP,      LEARN_DOWN,   -1,
+        /*   MOVING_UP */         ENT_MOVING_UP,       LP_POS,        -1,  MOVING_DOWN,   STOPPED,          -1,           -1,              UP,        -1,           -1,              -1,   -1,
+        /*          UP */                ENT_UP,           -1,        -1,  MOVING_DOWN,   STOPPED,          -1,   MOVING_POS,              -1,        -1,     LEARN_UP,      LEARN_DOWN,   -1,
+        /* MOVING_DOWN */       ENT_MOVING_DOWN,       LP_POS,        -1,           -1,   STOPPED,   MOVING_UP,           -1,            DOWN,        -1,           -1,              -1,   -1,
+        /*        DOWN */              ENT_DOWN,           -1,        -1,           -1,   STOPPED,   MOVING_UP,   MOVING_POS,              -1,        -1,     LEARN_UP,      LEARN_DOWN,   -1,
+        /*  MOVING_POS */              ENT_POS,        LP_POS,        -1,           -1,   STOPPED,          -1,           -1,         STOPPED,        -1,           -1,              -1,   -1,
+        /*    LEARN_UP */            ENT_LEARN,      LP_LEARN,        -1,           -1,   STOPPED,          -1,           -1,              -1,        STOPPED,      -1,              -1,   -1,
+        /*  LEARN_DOWN */            ENT_LEARN,      LP_LEARN,        -1,           -1,   STOPPED,          -1,           -1,              -1,        STOPPED,      -1,              -1,   -1
     };
     // clang-format on
     Machine::begin(state_table, ELSE);
+    autoLearnTime.set(10000);
 
     return *this;
 }
@@ -74,6 +77,9 @@ void SknAtmDoor::doorStop() {
 void SknAtmDoor::doorHalt() { 
     ranger.stop(); 
 }
+void SknAtmDoor::doorStartAutoLearn() { 
+    ranger.start();
+}
 void SknAtmDoor::doorChangeDirection() { 
     relayChangeDirection();
 }
@@ -103,6 +109,12 @@ int SknAtmDoor::event(int id) {
         break;
     case EVT_POS_REACHED:
          return (id == next_trigger);
+    case EVT_TIMER:
+          return autoLearnTime.expired( this );
+    case EVT_LEARN_UP:
+         return (id == next_trigger);
+    case EVT_LEARN_DOWN:
+         return (id == next_trigger);
     }
     return false;
 }
@@ -130,35 +142,35 @@ void SknAtmDoor::action(int id)
         bChangeDirectionEnabled=false;
         eExpectedPosDirection=STOPPED;
         push(connectors, ON_POS, 0, uiEstimatedPosition, uiRequestedPosition);        
-        push(connectors, ON_CHANGE, 0, state(), 0);
+        push(connectors, ON_CHANGE, 0, current, 0);
         break;
     case ENT_MOVING_UP:
         doorMove();
-        push(connectors, ON_CHANGE, 0, state(), 0);
+        push(connectors, ON_CHANGE, 0, current, 0);
         if (uiEstimatedPosition % 2 == 0) {
             push(connectors, ON_POS, 0, uiEstimatedPosition, uiRequestedPosition);        
         }
         break;
     case ENT_UP:
         doorHalt();
-        push(connectors, ON_CHANGE, 0, state(), 0);
+        push(connectors, ON_CHANGE, 0, current, 0);
         push(connectors, ON_POS, 0, uiEstimatedPosition, uiRequestedPosition);        
         break;
     case ENT_MOVING_DOWN:
         doorMove();
-        push(connectors, ON_CHANGE, 0, state(), 0);
+        push(connectors, ON_CHANGE, 0, current, 0);
         if (uiEstimatedPosition % 2 == 0) {
             push(connectors, ON_POS, 0, uiEstimatedPosition, uiRequestedPosition);        
         }
         break;
     case ENT_DOWN:
         doorHalt();
-        push(connectors, ON_CHANGE, 0, state(), 0);
+        push(connectors, ON_CHANGE, 0, current, 0);
         push(connectors, ON_POS, 0, uiEstimatedPosition, uiRequestedPosition);        
         break;
     case ENT_POS:
         doorMove();
-        push(connectors, ON_CHANGE, 0, state(), 0);
+        push(connectors, ON_CHANGE, 0, current, 0);
         if (uiEstimatedPosition % 2 == 0) {
             push(connectors, ON_POS, 0, uiEstimatedPosition, uiRequestedPosition);        
         }
@@ -174,6 +186,18 @@ void SknAtmDoor::action(int id)
             push(connectors, ON_POS, 0, uiEstimatedPosition, uiRequestedPosition);
         }
         // Serial.printf("^ SknAtmDoor::Action() ep=%d, rp=%d, eReq:%s, state:%s\n", uiEstimatedPosition, uiRequestedPosition, mapstate(eRequestedDirection), mapstate(state()));
+        break;
+    case LP_LEARN:
+        if ((cycles % 20000) == 0) {
+            uiLastEstimatedPosition = uiEstimatedPosition;
+            push(connectors, ON_POS, 0, uiEstimatedPosition, uiRequestedPosition);
+            push(connectors, ON_CHANGE, 0, current, 0);
+        }        
+        break;
+    case ENT_LEARN:
+        doorStartAutoLearn();
+        push(connectors, ON_POS, 0, uiEstimatedPosition, uiRequestedPosition);
+        push(connectors, ON_CHANGE, 0, current, 0);
         break;
     }
 }
@@ -221,9 +245,27 @@ SknAtmDoor& SknAtmDoor::cmd_pos(uint8_t destPos) {
     return *this;
 }
 
+SknAtmDoor& SknAtmDoor::cmd_auto_learn_up(void) {        // Learn door boundaries
+    uiRequestedPosition = 100;
+    eRequestedDirection = LEARN_UP;
+    eExpectedPosDirection = eRequestedDirection;
+    bChangeDirectionEnabled=false;
+	trigger(EVT_LEARN_UP);
+	return *this;
+}
+SknAtmDoor& SknAtmDoor::cmd_auto_learn_down(void) {        // Learn door boundaries
+    uiRequestedPosition = 100;
+    eRequestedDirection = LEARN_DOWN;
+    eExpectedPosDirection = eRequestedDirection;
+    bChangeDirectionEnabled=false;
+	trigger(EVT_LEARN_DOWN);
+	return *this;
+}
+
 SknAtmDoor& SknAtmDoor::cmd_down() {
     uiRequestedPosition = 100;
     eRequestedDirection = MOVING_DOWN;
+    bChangeDirectionEnabled=true;
 	trigger(EVT_DOWN);
 	return *this;
 }
@@ -238,6 +280,7 @@ SknAtmDoor& SknAtmDoor::cmd_stop() {
 SknAtmDoor& SknAtmDoor::cmd_up() {
     uiRequestedPosition = 0;
     eRequestedDirection = MOVING_UP;
+    bChangeDirectionEnabled=true;
 	trigger(EVT_UP);
 	return *this;
 }
@@ -246,13 +289,14 @@ SknAtmDoor& SknAtmDoor::setDoorPosition_cb(uint8_t currentPosition) {
     uiEstimatedPosition = currentPosition;
     iSampleCount++;
     int eDir=STOPPED;
+
+    /*
+     * which way are we moving? */
     for( iSamples = 0; iSamples < MAX_SAMPLES; iSamples++) { // shift samples down
         iaDirection[iSamples] = iaDirection[iSamples+1];
     }
     iaDirection[iSamples] = currentPosition; // assign latest value to top
 
-    /*
-     * which way are we moving? */
     if ((iSampleCount >= MAX_SAMPLES) && (eRequestedDirection==MOVING_UP || eRequestedDirection==MOVING_DOWN || eRequestedDirection==MOVING_POS )) { 
         if (iChangeDirectionCounter<0) { iChangeDirectionCounter=0; }
         /* 
@@ -275,10 +319,14 @@ SknAtmDoor& SknAtmDoor::setDoorPosition_cb(uint8_t currentPosition) {
         } else if(eDir==STOPPED && bChangeDirectionEnabled) {  // door stalled during move_pos
             iChangeDirectionCounter++;
         
-        } else if( eRequestedDirection==MOVING_POS && eExpectedPosDirection!=eDir ) {  // moving_pos expected not matching actual direction
+        } else if( eRequestedDirection!=eDir || eExpectedPosDirection!=eDir ) {  // expected not matching actual direction
             iChangeDirectionCounter++;
         
         } else iChangeDirectionCounter--;
+
+        if ( eExpectedPosDirection>= LEARN_UP) {    // ignore actions if auto learning
+            iChangeDirectionCounter=0;
+        }
 
         // handle change direction if moving_pos
         if(iChangeDirectionCounter>=MAX_SAMPLES && bChangeDirectionEnabled) { // must be x in a row
@@ -344,6 +392,6 @@ SknAtmDoor& SknAtmDoor::onPos( atm_cb_lambda_t callback, int idx ) {
  */
 SknAtmDoor& SknAtmDoor::trace( Stream & stream ) {
   Machine::setTrace( &stream, atm_serial_debug::trace,
-    "DOOR\0EVT_DOWN\0EVT_STOP\0EVT_UP\0EVT_POS\0EVT_POS_REACHED\0ELSE\0STOPPED\0MOVING_UP\0UP\0MOVING_DOWN\0DOWN\0MOVING_POS" );
+    "DOOR\0EVT_DOWN\0EVT_STOP\0EVT_UP\0EVT_POS\0EVT_POS_REACHED\0EVT_TIMER\0EVT_LEARN_UP\0EVT_LEARN_DOWN\0ELSE\0STOPPED\0MOVING_UP\0UP\0MOVING_DOWN\0DOWN\0MOVING_POS\0LEARN_UP\0LEARN_DOWN" );
   return *this;
 }

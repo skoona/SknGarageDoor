@@ -86,27 +86,31 @@ extern "C"
 // D1_mini Pins
   #define SDA 4        // D2
   #define SCL 5        // D1
-#elif defined(ARDUINO_ESP8266_ESP12) || defined(ARDUINO_ESP8266_SONOFF_BASIC)
+  #define LOX_GPIO   13    // D7
+  #define RELAY_GPIO 12    // D6
+  #define LED_BUILTIN 2
+#elif defined(ARDUINO_ESP8266_ESP12)
 // Esp8266EX  pins
   #define SDA 5
   #define SCL 4
-#elif defined(ARDUINO_ESP8266_SONOFF_BASIC)
-// SonOff_Basic  pins
-  #define SDA 5
-  #define SCL 4
+  #define LOX_GPIO   13    // D7
+  #define RELAY_GPIO 12    // D6
+  #define LED_BUILTIN 2
+#elif defined(ARDUINO_ESP8266_NODEMCU)
+// nodemcu esp12f  pins  -- ESP8266 Relay Module, ESP-12F Development Board AC 220V DC 12V Single relay module
+  #define SDA        14
+  #define SCL        12
+  #define LOX_GPIO   13    
+  #define RELAY_GPIO  5   
+  #define LED_BUILTIN 16
 #elif defined(ARDUINO_ESP32_DEV)
 // esp32doit-devkit-v1  pins
   #define SDA 21
   #define SCL 22
   #define ATM_PLAYER_DISABLE_TONE   // disable some Automaton Ardunio issues (noTone, Tone, AnalogWrite)
-#endif
-
-
-#define LOX_GPIO   13    // D7
-#define RELAY_GPIO 12    // D6
-
-#ifndef LED_BUILTIN
-  #define LED_BUILTIN 4    // d1_mini GPIO2, esp32doit-devkit-v1=GPIO2
+  #define LOX_GPIO   13    // D7
+  #define RELAY_GPIO 12    // D6
+  #define LED_BUILTIN 4
 #endif
 
  /* *

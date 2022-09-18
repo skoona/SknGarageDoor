@@ -46,11 +46,16 @@ private:
   const char *cIndent = " ✖  ";
   const char *cSknDoorID = "State";           // Door Positon Label; UP, DOWN, STOPPED,...
   const char *cSknPosID = "Position";         // Range 0 to 100; current position of door
-  const char *cSknRestartID = "Reboot";       // service commander to force reboot of node
+  const char *cSknModeID = "Services";        // service commander to force reboot of node, or autolean up/down
   
   const char *cDoorState = "Down";            // current door state/label
+  const char *cAutoLearnDoorState = "Normal";    // current service label
+  char cAutoBuffer[128];
   int iDoorPosition = 100;                    // current door position; initially assumes door is down 
   int dataReadyPin = 13;                      // pin that controls relay; HIGH is active
+  int iDoorAutoLearnUpPosition = MM_MIN;      // Learning door up door position, used in range translater
+  int iDoorAutoLearnDownPosition = MM_MAX;    // Learning door down door position, used in range translater
+  bool bDoorAutoLearnActive=false;            // Indicates if auto learn limits is active
 
   void enableAutomatons();                    // Initiales machines and inter-machine communications
   void printCaption();                        // utility
