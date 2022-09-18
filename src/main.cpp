@@ -51,14 +51,16 @@ Note:
   2. Ranger (VL53L1x) will cycle briefly on boot to fill its internal averaging buffer.
   3. 100 is considered DOWN, with 0 considered UP.
 
-     [-- STATES --]   [------- Actions/External Outputs ----------]  [------------------------- Event/External Inputs -----------------------------]   
-                                 ON_ENTER       ON_LOOP    ON_EXIT      EVT_DOWN      EVT_STOP        EVT_UP       EVT_POS  EVT_POS_REACHED  ELSE 
-         STOPPED               ENT_STOPPED,           -1,        -1,  MOVING_DOWN,           -1,    MOVING_UP,   MOVING_POS,              -1,   -1,
-       MOVING_UP             ENT_MOVING_UP,       LP_POS,        -1,  MOVING_DOWN,      STOPPED,           -1,           -1,              UP,   -1,
-              UP                    ENT_UP,           -1,        -1,  MOVING_DOWN,      STOPPED,           -1,   MOVING_POS,              -1,   -1,
-     MOVING_DOWN           ENT_MOVING_DOWN,       LP_POS,        -1,           -1,      STOPPED,    MOVING_UP,           -1,            DOWN,   -1,
-            DOWN                  ENT_DOWN,           -1,        -1,           -1,      STOPPED,    MOVING_UP,   MOVING_POS,              -1,   -1,
-      MOVING_POS                   ENT_POS,       LP_POS,        -1,           -1,      STOPPED,           -1,           -1,         STOPPED,   -1
+        [-- STATES --]   [------- Actions/External Outputs ----------] [-------------------------------------------- Event/External Inputs ---------------------------------------------] 
+                                    ON_ENTER       ON_LOOP    ON_EXIT      EVT_DOWN   EVT_STOP       EVT_UP       EVT_POS  EVT_POS_REACHED  EVT_TIMER   EVT_LEARN_UP  EVT_LEARN_DOWN  ELSE 
+             STOPPED            ENT_STOPPED,           -1,        -1,  MOVING_DOWN,        -1,   MOVING_UP,   MOVING_POS,              -1,        -1,     LEARN_UP,      LEARN_DOWN,   -1,
+           MOVING_UP          ENT_MOVING_UP,       LP_POS,        -1,  MOVING_DOWN,   STOPPED,          -1,           -1,              UP,        -1,           -1,              -1,   -1,
+                  UP                 ENT_UP,           -1,        -1,  MOVING_DOWN,   STOPPED,          -1,   MOVING_POS,              -1,        -1,     LEARN_UP,      LEARN_DOWN,   -1,
+         MOVING_DOWN        ENT_MOVING_DOWN,       LP_POS,        -1,           -1,   STOPPED,   MOVING_UP,           -1,            DOWN,        -1,           -1,              -1,   -1,
+                DOWN               ENT_DOWN,           -1,        -1,           -1,   STOPPED,   MOVING_UP,   MOVING_POS,              -1,        -1,     LEARN_UP,      LEARN_DOWN,   -1,
+          MOVING_POS               ENT_POS,        LP_POS,        -1,           -1,   STOPPED,          -1,           -1,         STOPPED,        -1,           -1,              -1,   -1,
+            LEARN_UP             ENT_LEARN,      LP_LEARN,        -1,           -1,   STOPPED,          -1,           -1,              -1,        STOPPED,      -1,              -1,   -1,
+          LEARN_DOWN             ENT_LEARN,      LP_LEARN,        -1,           -1,   STOPPED,          -1,           -1,              -1,        STOPPED,      -1,              -1,   -1
 
                             --- actions() ---                                                    --- events() ---        
 */
@@ -75,7 +77,7 @@ extern "C"
 #endif
 
 #define SKN_MOD_NAME "Garage Door Automation"
-#define SKN_MOD_VERSION "0.0.1"
+#define SKN_MOD_VERSION "1.0.1"
 #define SKN_MOD_BRAND "SknSensors"
 
 #define SKN_TITLE "Garage Door"

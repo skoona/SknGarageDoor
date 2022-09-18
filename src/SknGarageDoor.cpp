@@ -224,6 +224,11 @@ void SknGarageDoor::enableAutomatons() {
           setProperty(cSknModeID).send(cAutoLearnDoorState);
         }
         setDoorState_cb((char *)door.mapstate(v));
+        if(v==SknAtmDoor::STOPPED) {
+          snprintf(cAutoBuffer, sizeof(cAutoBuffer), "Auto Learn Range, Up %d mm, Down %d mm", iDoorAutoLearnUpPosition, iDoorAutoLearnDownPosition);
+          cAutoLearnDoorState = cAutoBuffer;
+          setProperty(cSknModeID).send(cAutoLearnDoorState);
+        }
       },0)
 	    .onPos([this]( int idx, int v, int up ) { 
         setDoorPosition_cb(v,up); 
