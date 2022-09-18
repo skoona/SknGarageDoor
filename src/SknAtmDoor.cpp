@@ -246,19 +246,23 @@ SknAtmDoor& SknAtmDoor::cmd_pos(uint8_t destPos) {
 }
 
 SknAtmDoor& SknAtmDoor::cmd_auto_learn_up(void) {        // Learn door boundaries
-    uiRequestedPosition = 100;
-    eRequestedDirection = LEARN_UP;
-    eExpectedPosDirection = eRequestedDirection;
-    bChangeDirectionEnabled=false;
-	trigger(EVT_LEARN_UP);
+    if(current!=DOWN) {
+        uiRequestedPosition = 0;
+        eRequestedDirection = LEARN_UP;
+        eExpectedPosDirection = eRequestedDirection;
+        bChangeDirectionEnabled=false;
+        trigger(EVT_LEARN_UP);
+    }
 	return *this;
 }
 SknAtmDoor& SknAtmDoor::cmd_auto_learn_down(void) {        // Learn door boundaries
-    uiRequestedPosition = 100;
-    eRequestedDirection = LEARN_DOWN;
-    eExpectedPosDirection = eRequestedDirection;
-    bChangeDirectionEnabled=false;
-	trigger(EVT_LEARN_DOWN);
+    if(current!=UP) {
+        uiRequestedPosition = 100;
+        eRequestedDirection = LEARN_DOWN;
+        eExpectedPosDirection = eRequestedDirection;
+        bChangeDirectionEnabled=false;
+        trigger(EVT_LEARN_DOWN);
+    }
 	return *this;
 }
 
@@ -297,7 +301,7 @@ SknAtmDoor& SknAtmDoor::setDoorPosition_cb(uint8_t currentPosition) {
     }
     iaDirection[iSamples] = currentPosition; // assign latest value to top
 
-    if ((iSampleCount >= MAX_SAMPLES) && (eRequestedDirection==MOVING_UP || eRequestedDirection==MOVING_DOWN || eRequestedDirection==MOVING_POS )) { 
+    if ((iSampleCount >= MAX_SAMPLES) && (current!=DOWN || current!=UP)) { 
         if (iChangeDirectionCounter<0) { iChangeDirectionCounter=0; }
         /* 
          * a > b = UP
@@ -305,7 +309,7 @@ SknAtmDoor& SknAtmDoor::setDoorPosition_cb(uint8_t currentPosition) {
          * a == b = STOPPED */
         if (iaDirection[0]  >  iaDirection[iSamples]) { eDir=MOVING_UP; }
         if (iaDirection[0]  <  iaDirection[iSamples]) { eDir=MOVING_DOWN; }
-        if (iaDirection[0]  == iaDirection[iSamples]) { eDir=STOPPED; }
+        if (iaDirection[0]  == iaDirection[iSamples]) { eDir=(eExpectedPosDirection>=LEARN_UP ? eExpectedPosDirection : STOPPED); }
 
         /*
          * If MOVING_POS allow change direction of door to reach positoning goal
@@ -319,7 +323,7 @@ SknAtmDoor& SknAtmDoor::setDoorPosition_cb(uint8_t currentPosition) {
         } else if(eDir==STOPPED && bChangeDirectionEnabled) {  // door stalled during move_pos
             iChangeDirectionCounter++;
         
-        } else if( eRequestedDirection!=eDir || eExpectedPosDirection!=eDir ) {  // expected not matching actual direction
+        } else if( eRequestedDirection!=eDir || eExpectedPosDirection!=eDir || eDir!=STOPPED|| eExpectedPosDirection!=STOPPED ) {  // expected not matching actual direction
             iChangeDirectionCounter++;
         
         } else iChangeDirectionCounter--;
@@ -329,13 +333,13 @@ SknAtmDoor& SknAtmDoor::setDoorPosition_cb(uint8_t currentPosition) {
         }
 
         // handle change direction if moving_pos
-        if(iChangeDirectionCounter>=MAX_SAMPLES && bChangeDirectionEnabled) { // must be x in a row
+        if(iChangeDirectionCounter>( 3 * MAX_SAMPLES) &&  current!=eDir  && bChangeDirectionEnabled) { // must be x in a row
             doorChangeDirection(); // door moving in wrong directions
             iChangeDirectionCounter=0;
         }
 
         // handle halting ranger if door has been stationary too long
-        if(iChangeDirectionCounter>=( 2 * MAX_SAMPLES) ) { // must be 2x in a row
+        if(iChangeDirectionCounter>=( 4 * MAX_SAMPLES) && eDir==STOPPED) { // must be 2x in a row
             doorHalt();            // turn off ranger
             iChangeDirectionCounter=0;
         }

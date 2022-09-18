@@ -29,8 +29,8 @@ void SknGarageDoor::updateDoorInfo() {
     setProperty(cSknDoorID).send(cDoorState);
     setProperty(cSknPosID).send(String(iDoorPosition));
     if(bDoorAutoLearnActive) {
-      setProperty(cSknModeID).send(cAutoLearnDoorState);
-    } 
+    setProperty(cSknModeID).send(cAutoLearnDoorState);
+    }
   }
 }
 
@@ -122,9 +122,6 @@ void SknGarageDoor::onReadyToOperate() {
 void SknGarageDoor::setDoorState_cb(char *_state) {
   cDoorState = _state;
   updateDoorInfo();
-  if(!bDoorAutoLearnActive) {
-    setProperty(cSknModeID).send(cAutoLearnDoorState);
-  }
 }
 /**
  *
@@ -134,6 +131,53 @@ void SknGarageDoor::setDoorPosition_cb(unsigned int _position, unsigned int _req
   updateDoorInfo();
 }
 
+ /*
+  * Save door limits */
+bool SknGarageDoor::autoLearnSaveLimits(){
+  bool rc = false;
+  prefs.begin(cSknDoorID, false);
+      prefs.putInt("mm_min", iDoorAutoLearnUpPosition);
+      prefs.putInt("mm_max", iDoorAutoLearnDownPosition);
+      rc = prefs.isKey("mm_min");
+  prefs.end();
+  Homie.getLogger()
+      << "〽 "
+      << "Node: " << getName()
+      << " Auto Learn Limits Saving:[" 
+      << (rc ? "True": "False")
+      << "] up="
+      << iDoorAutoLearnUpPosition
+      << ", down="
+      << iDoorAutoLearnDownPosition
+      << endl;
+  return rc;
+}
+
+ /*
+  * Restore door limits */
+bool SknGarageDoor::autoLearnRestoreLimits(){
+  bool rc = false;
+  prefs.begin(cSknDoorID, false);
+  if (prefs.isKey("mm_min")) {
+    iDoorAutoLearnUpPosition = prefs.getInt("mm_min", MM_MIN);
+    iDoorAutoLearnDownPosition = prefs.getInt("mm_max", MM_MAX);
+    rc = true;
+  }
+  prefs.end();
+  Homie.getLogger()
+      << "〽 "
+      << "Node: " << getName()
+      << " Auto Learn Limits Restoring:[" 
+      << (rc ? "True": "False")
+      << "] up="
+      << iDoorAutoLearnUpPosition
+      << ", down="
+      << iDoorAutoLearnDownPosition
+      << endl;
+  return rc;
+}
+
+
 /**
  * @brief 
  * 
@@ -141,6 +185,8 @@ void SknGarageDoor::setDoorPosition_cb(unsigned int _position, unsigned int _req
 void SknGarageDoor::enableAutomatons() {
   if(!vbOne) {
     vbOne=true;
+
+    autoLearnRestoreLimits();
 
     ranger.begin( 1024);       // vl53l1x Time of Flight distance measurement
 
@@ -171,9 +217,11 @@ void SknGarageDoor::enableAutomatons() {
       .trace( Serial )
       .onChange([this]( int idx, int v, int up ) { 
         if(bDoorAutoLearnActive && v<SknAtmDoor::LEARN_UP) {
-          bDoorAutoLearnActive=false;
+          autoLearnSaveLimits();
           snprintf(cAutoBuffer, sizeof(cAutoBuffer), "Auto Learn Range, Up %d mm, Down %d mm", iDoorAutoLearnUpPosition, iDoorAutoLearnDownPosition);
           cAutoLearnDoorState = cAutoBuffer;
+          bDoorAutoLearnActive=false;
+          setProperty(cSknModeID).send(cAutoLearnDoorState);
         }
         setDoorState_cb((char *)door.mapstate(v));
       },0)
@@ -194,6 +242,7 @@ void SknGarageDoor::enableAutomatons() {
  *
  */
 void SknGarageDoor::setup() {
+
    advertise(cSknDoorID)
     .setName("State")
     .setDatatype("enum")

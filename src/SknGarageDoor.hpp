@@ -12,6 +12,7 @@ extern volatile bool gbEnableDoorOperations;  // value managed by HomieEvent hoo
 #include <Automaton.h>
 #include <Homie.hpp>
 #include <Wire.h>
+#include <Preferences.h>
 #include "SknLoxRanger.hpp"
 #include "SknAtmDoor.hpp"
 #include "SknAtmDigital.hpp"
@@ -32,6 +33,8 @@ protected:
   virtual void loop() override;
 
 private:
+  Preferences prefs;                       // stored ranger limit min - max
+
 /*
  * Door travel: 86.5" or 2198 mm
  * Mount point: 13"   or  330 mm
@@ -46,7 +49,7 @@ private:
   const char *cIndent = " ✖  ";
   const char *cSknDoorID = "State";           // Door Positon Label; UP, DOWN, STOPPED,...
   const char *cSknPosID = "Position";         // Range 0 to 100; current position of door
-  const char *cSknModeID = "Services";        // service commander to force reboot of node, or autolean up/down
+  const char *cSknModeID = "Service";        // service commander to force reboot of node, or autolean up/down
   
   const char *cDoorState = "Down";            // current door state/label
   const char *cAutoLearnDoorState = "Normal";    // current service label
@@ -56,9 +59,12 @@ private:
   int iDoorAutoLearnUpPosition = MM_MIN;      // Learning door up door position, used in range translater
   int iDoorAutoLearnDownPosition = MM_MAX;    // Learning door down door position, used in range translater
   bool bDoorAutoLearnActive=false;            // Indicates if auto learn limits is active
+  bool autoLearnSaveLimits();
+  bool autoLearnRestoreLimits();
 
   void enableAutomatons();                    // Initiales machines and inter-machine communications
   void printCaption();                        // utility
+
 
   SknLoxRanger  ranger;  // door position vl53l1x measurement
   SknAtmDoor    door;      // main door logic and relay

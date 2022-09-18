@@ -79,23 +79,23 @@ unsigned int SknLoxRanger::readValues(bool wait=false)
     return uiDistanceValue;
   }
 
-  for (int idx = 0; idx < capacity; idx++) {
-    if(distances[idx+1]>=5000) {
-      distances[idx] = value;
-    }else {
-      distances[idx] = distances[idx+1]; // move all down
-    }
-    sum += distances[idx];
-  }
-
   if (lox.ranging_data.range_status == 0) {
+    for (int idx = 0; idx < capacity; idx++) {
+      if(distances[idx+1]>=5000) {
+        distances[idx] = value;
+      }else {
+        distances[idx] = distances[idx+1]; // move all down
+      }
+      sum += distances[idx];
+    }
+
     distances[capacity] = value;
     sum += distances[capacity];
     avg = (sum / (capacity +1));
     uiDistanceValue = (unsigned int) avg;
     // uiDistanceValue = value;
   } else {
-    distances[capacity] = uiDistanceValue;
+    distances[capacity] = value;
   }
 
   Serial.printf("〽 range: %u mm avgerage: %lu mm,\tstatus: %s\traw: %u\tsignal: %3.1f MCPS\tambient: %3.1f MCPS\n",
