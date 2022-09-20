@@ -77,7 +77,7 @@ extern "C"
 #endif
 
 #define SKN_MOD_NAME "Garage Door Automation"
-#define SKN_MOD_VERSION "1.0.1"
+#define SKN_MOD_VERSION "1.0.2"
 #define SKN_MOD_BRAND "SknSensors"
 
 #define SKN_TITLE "Garage Door"
@@ -90,6 +90,7 @@ extern "C"
   #define SCL 5        // D1
   #define LOX_GPIO   13    // D7
   #define RELAY_GPIO 12    // D6
+  #undef LED_BUILTIN
   #define LED_BUILTIN 2
 #elif defined(ARDUINO_ESP8266_ESP12)
 // Esp8266EX  pins
@@ -97,6 +98,7 @@ extern "C"
   #define SCL 4
   #define LOX_GPIO   13    // D7
   #define RELAY_GPIO 12    // D6
+  #undef LED_BUILTIN
   #define LED_BUILTIN 2
 #elif defined(ARDUINO_ESP8266_NODEMCU)
 // nodemcu esp12f  pins  -- ESP8266 Relay Module, ESP-12F Development Board AC 220V DC 12V Single relay module
@@ -104,6 +106,7 @@ extern "C"
   #define SCL        12
   #define LOX_GPIO   13    
   #define RELAY_GPIO  5   
+  #undef LED_BUILTIN
   #define LED_BUILTIN 16
 #elif defined(ARDUINO_ESP32_DEV)
 // esp32doit-devkit-v1  pins
@@ -112,6 +115,7 @@ extern "C"
   #define ATM_PLAYER_DISABLE_TONE   // disable some Automaton Ardunio issues (noTone, Tone, AnalogWrite)
   #define LOX_GPIO   13    // D7
   #define RELAY_GPIO 12    // D6
+  #undef LED_BUILTIN
   #define LED_BUILTIN 4
 #endif
 

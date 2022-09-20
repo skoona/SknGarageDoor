@@ -46,19 +46,25 @@ SknAtmDoor& SknAtmDoor::relayPause(unsigned int _ms) {
     return *this;
 }
 SknAtmDoor& SknAtmDoor::relayStart() {
+    #ifndef SKN_DISABLE_RELAY
     digitalWrite(uiRelayPin, HIGH);
     relayPause(384); 
     digitalWrite(uiRelayPin, LOW); 
+    #endif
     return *this;    
 }
 SknAtmDoor& SknAtmDoor::relayStop() {
+    #ifndef SKN_DISABLE_RELAY
     digitalWrite(uiRelayPin, HIGH);
     relayPause(64); 
     digitalWrite(uiRelayPin, LOW); 
+    #endif
     return *this;    
 }
 SknAtmDoor& SknAtmDoor::relayChangeDirection() {
+    #ifndef SKN_DISABLE_RELAY
     relayStop().relayPause(10).relayStart();    
+    #endif
     Serial.printf("✖✖✖ SknAtmDoor::relayChangeDirection() ep=%d, rp=%d, ePos:%s, eReq:%s, curr:%s\n", uiEstimatedPosition, uiRequestedPosition, mapstate(eExpectedPosDirection), mapstate(eRequestedDirection), mapstate(current));
     return *this;    
 }
