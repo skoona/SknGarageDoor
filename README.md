@@ -28,6 +28,7 @@ Homie ESP8266 Node developed using Automaton State Machines and VL53L1x
 * Full travel:        86.5" or 2198 mm
 * Device mount point: 13.0" or  330 mm
 * Maximum range:               2528 mm
+* Compile option to disable relay:  SKN_DISABLE_RELAY
 
 ### Wiring Pin
     Module
