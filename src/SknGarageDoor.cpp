@@ -251,13 +251,13 @@ void SknGarageDoor::setup() {
    advertise(cSknDoorID)
     .setName("State")
     .setDatatype("enum")
-    .setFormat("STOPPED,MOVING_UP,UP,MOVING_DOWN,DOWN,MOVING_POS")
+    .setFormat("STOPPED,MOVING_UP,UP,MOVING_DOWN,DOWN,MOVING_POS,LEARN_UP,LEARN_DOWN")
     .setRetained(true);
 
   advertise(cSknPosID)
     .setName("Position")
     .setDatatype("integer")
-    .setFormat("0:100")
+    .setFormat("0:100,UP,DOWN,STOP")
     .setUnit("%")
     .setRetained(true)
     .settable();
@@ -268,7 +268,7 @@ void SknGarageDoor::setup() {
   advertise(cSknModeID)
     .setName("Services")
     .setDatatype("string")
-    .setFormat("")
+    .setFormat("AUTO_LEARN_UP,AUTO_LEARN_DOWN,REBOOT")
     .settable();
     // Commands: auto_learn_up, auto_learn_down, reboot
 

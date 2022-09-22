@@ -77,7 +77,7 @@ extern "C"
 #endif
 
 #define SKN_MOD_NAME "Garage Door Automation"
-#define SKN_MOD_VERSION "1.0.2"
+#define SKN_MOD_VERSION "1.0.3"
 #define SKN_MOD_BRAND "SknSensors"
 
 #define SKN_TITLE "Garage Door"
