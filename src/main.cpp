@@ -150,14 +150,6 @@ void onHomieEvent(const HomieEvent& event) {
 }
 
 /*
- * Callback for Homie Broadcasts */
-bool broadcastHandler(const String &level, const String &value)
-{
-  Homie.getLogger() << "Received broadcast level " << level << ": " << value << endl;
-  return true;
-}
-
-/*
  * Arduino Setup: Initialze Homie */
 void setup()
 {
@@ -173,8 +165,7 @@ void setup()
   Homie_setFirmware(SKN_MOD_NAME, SKN_MOD_VERSION);
   Homie_setBrand(SKN_MOD_BRAND);
   
-  Homie.setBroadcastHandler(broadcastHandler)
-      .setLedPin(LED_BUILTIN, LOW)
+  Homie.setLedPin(LED_BUILTIN, LOW)
       .disableResetTrigger()
       .onEvent(onHomieEvent);
 
